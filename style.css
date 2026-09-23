@@ -12,6 +12,8 @@ body { overflow: hidden; background: var(--bg); color: var(--fg); font-family: M
 main { min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding: 74px 0 104px; }
 .gallery { height: min(61vh, 610px); min-height: 290px; position: relative; perspective: 1400px; perspective-origin: 50% 48%; }
 .stage { position: absolute; inset: 0; outline: none; touch-action: pan-y; transform-style: preserve-3d; }
+.stage.is-empty::after { content: ""; position: absolute; z-index: 30; inset: 0 24vw; background: linear-gradient(90deg, transparent, var(--bg) 23%, var(--bg) 77%, transparent); pointer-events: none; opacity: 1; transition: opacity 180ms ease; }
+.stage:not(.is-empty)::after { opacity: 0; }
 .rail { position: absolute; inset: 0; transform-style: preserve-3d; }
 .slide { position: absolute; top: 50%; left: 50%; width: min(52vw, 760px); height: min(29.25vw, 427px); max-height: 58vh; min-height: 190px; overflow: hidden; background: #d5d5d1; outline: 1px solid rgba(38, 38, 35, .14); outline-offset: -1px; transform-style: preserve-3d; user-select: none; -webkit-user-select: none; }
 .slide-poster { position: absolute; inset: 0; z-index: 2; display: block; width: 100%; height: 100%; object-fit: cover; background: #d5d5d1; pointer-events: none; opacity: 1; transition: opacity 420ms ease; }
@@ -23,6 +25,7 @@ main { min-height: 100svh; display: flex; flex-direction: column; justify-conten
 .empty { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--muted); white-space: nowrap; }
 .caption { position: absolute; inset: auto 5.2vw 59px; min-height: 72px; display: grid; grid-template-columns: 1fr 2fr 1fr; align-items: end; }
 .work-info { grid-column: 2; display: grid; justify-items: center; gap: 6px; text-align: center; transition: opacity 160ms ease; }
+.work-info.is-empty { visibility: hidden; opacity: 0; }
 .work-info.is-changing, .counter.is-changing { opacity: 0; }
 .eyebrow { color: var(--muted); font-size: 8px; }
 .work-info h1 { margin: 0; max-width: 62vw; overflow: hidden; color: #252523; font-size: clamp(18px, 2.2vw, 30px); font-weight: 500; letter-spacing: .045em; line-height: 1.08; text-overflow: ellipsis; white-space: nowrap; }
@@ -39,6 +42,7 @@ main { min-height: 100svh; display: flex; flex-direction: column; justify-conten
   .topbar { height: 60px; padding: 0 6vw; }.edition { font-size: 8px; }
   main { padding: 58px 0 116px; }
   .gallery { height: 54vh; min-height: 280px; perspective: 950px; }
+  .stage.is-empty::after { inset-inline: 20vw; }
   .slide { width: 72vw; height: 48vw; min-height: 0; max-height: 44vh; }
   .caption { inset: auto 6vw 64px; min-height: 78px; grid-template-columns: 1fr auto; row-gap: 17px; }
   .work-info { grid-column: 1 / 3; grid-row: 1; align-self: start; }
