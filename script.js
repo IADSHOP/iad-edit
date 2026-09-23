@@ -10,6 +10,11 @@
   const totalLabel = document.querySelector('#total');
   const empty = document.querySelector('#empty');
   const slides = [];
+  const centerMark = document.createElement('span');
+  centerMark.id = 'center-anchor';
+  centerMark.textContent = 'IAD';
+  centerMark.setAttribute('aria-hidden', 'true');
+  stage.append(centerMark);
 
   // Start in the gap between the last and first works: no work is selected yet.
   let position = works.length ? works.length - .5 : 0;
@@ -23,9 +28,12 @@
   let burstIntent = 0;
   let burstActive = false;
   let burstFromEmpty = true;
+  let reversedDuringSnap = false;
+  let returnToEmpty = false;
   let snapTimer = 0;
   let playbackTimer = 0;
   let infoTimer = 0;
+  let countdownTimer = 0;
   let youtubeApiPromise = null;
   let hasInteracted = false;
   let touchStart = null;
@@ -54,8 +62,61 @@
     else apply();
   }
 
+  function clearSelectionForMotion() {
+    if (selected === null) return;
+    selected = null;
+    clearTimeout(infoTimer);
+    info.classList.add('is-changing');
+    counter.classList.add('is-changing');
+    infoTimer = setTimeout(() => {
+      if (selected !== null) return;
+      title.textContent = '';
+      type.textContent = '';
+      currentLabel.textContent = '—';
+      info.classList.add('is-empty');
+      info.classList.remove('is-changing');
+      counter.classList.remove('is-changing');
+    }, 130);
+  }
+
+  function clearCountdown() {
+    clearTimeout(countdownTimer);
+    countdownTimer = 0;
+    slides.forEach(slide => {
+      slide.countdown.classList.remove('is-visible', 'is-waiting');
+      slide.countdown.textContent = '';
+    });
+  }
+
+  function beginCountdown(index) {
+    clearCountdown();
+    const countdown = slides[index]?.countdown;
+    if (!countdown) return;
+    let value = 3;
+    countdown.textContent = String(value);
+    countdown.classList.add('is-visible');
+
+    const advance = () => {
+      if (selected !== index) return;
+      countdown.classList.remove('is-visible');
+      countdownTimer = setTimeout(() => {
+        if (selected !== index) return;
+        if (value > 1) {
+          value -= 1;
+          countdown.textContent = String(value);
+          countdown.classList.add('is-visible');
+          countdownTimer = setTimeout(advance, 300);
+        } else {
+          countdown.classList.add('is-waiting', 'is-visible');
+        }
+      }, 100);
+    };
+    countdownTimer = setTimeout(advance, 300);
+  }
+
   function stopPlayback() {
     clearTimeout(playbackTimer);
+    clearCountdown();
     slides.forEach(slide => {
       slide.element.classList.remove('is-playing');
       if (slide.player) {
@@ -107,7 +168,10 @@
   }
 
   function revealIfPlaying(slide, index) {
-    if (slide.frame && selected === index && !snapping) slide.element.classList.add('is-playing');
+    if (slide.frame && selected === index && !snapping) {
+      clearCountdown();
+      slide.element.classList.add('is-playing');
+    }
   }
 
   function onTikTokMessage(event) {
@@ -172,6 +236,7 @@
 
   function render() {
     const count = slides.length;
+    let nearestDistance = Infinity;
     totalLabel.textContent = pad(count);
     empty.hidden = count !== 0;
     stage.classList.toggle('is-empty', selected === null && !hasInteracted);
@@ -179,6 +244,7 @@
       let delta = index - position;
       delta = ((delta + count / 2) % count + count) % count - count / 2;
       const abs = Math.abs(delta);
+      nearestDistance = Math.min(nearestDistance, abs);
       const scale = abs < 1 ? 1 - abs * .24 : abs < 2 ? .76 - (abs - 1) * .26 : Math.max(.28, .50 - (abs - 2) * .075);
       const opacity = abs < 1 ? 1 - abs * .24 : abs < 2 ? .76 - (abs - 1) * .28 : Math.max(.12, .48 - (abs - 2) * .12);
       const blur = abs < 1 ? abs * .35 : abs < 2 ? .35 + (abs - 1) * .45 : Math.min(1.8, .8 + (abs - 2) * .2);
@@ -195,6 +261,7 @@
       card.classList.toggle('is-side', selected !== index);
       card.setAttribute('aria-hidden', abs < .5 ? 'false' : 'true');
     });
+    centerMark.style.opacity = String(clamp(nearestDistance * 2, 0, 1));
   }
 
   function settle() {
@@ -206,7 +273,9 @@
     if (burstFromEmpty && burstIntent !== 0) stepCount = Math.max(1, stepCount);
     stepCount = Math.min(4, stepCount);
     const direction = Math.sign(Math.abs(displacement) >= .02 ? displacement : burstIntent);
-    snapTarget = burstFromEmpty && direction && stepCount
+    if (returnToEmpty) snapTarget = burstAnchor;
+    else if (reversedDuringSnap) snapTarget = Math.round(projected);
+    else snapTarget = burstFromEmpty && direction && stepCount
       ? Math.round(burstAnchor + direction * .5) + direction * (stepCount - 1)
       : burstAnchor + direction * stepCount;
     if (!direction || !stepCount) snapTarget = burstAnchor;
@@ -216,17 +285,24 @@
   }
 
   function finishSnap() {
-    const next = wrap(Math.round(snapTarget), slides.length);
+    const returnedToEmpty = returnToEmpty && burstFromEmpty;
+    const next = returnedToEmpty ? null : wrap(Math.round(snapTarget), slides.length);
     const changed = next !== selected;
     selected = next;
-    position = snapTarget = next;
+    position = snapTarget = returnedToEmpty ? burstAnchor : next;
     velocity = 0;
     snapping = false;
     burstActive = false;
+    burstFromEmpty = false;
+    reversedDuringSnap = false;
+    returnToEmpty = false;
     burstIntent = 0;
     render();
-    if (changed) updateInfo(true);
-    if (hasInteracted) schedulePlayback(selected);
+    if (changed || returnedToEmpty) updateInfo(true);
+    if (hasInteracted && selected !== null) {
+      beginCountdown(selected);
+      schedulePlayback(selected);
+    }
   }
 
   function animate(time) {
@@ -235,8 +311,8 @@
     lastFrame = time;
 
     if (snapping && snapTarget !== null) {
-      position += (snapTarget - position) * (1 - Math.exp(-dt / .12));
-      if (Math.abs(snapTarget - position) < .001) {
+      position += (snapTarget - position) * (1 - Math.exp(-dt / .075));
+      if (Math.abs(snapTarget - position) < .002) {
         finishSnap();
         frameId = 0;
         lastFrame = 0;
@@ -262,21 +338,40 @@
     clearTimeout(playbackTimer);
     stopPlayback();
 
+    const modeFactor = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? innerHeight : 1;
+    const delta = clamp(event.deltaY * modeFactor, -240, 240);
     if (!burstActive) {
       burstActive = true;
       burstAnchor = selected === null ? position : selected;
       burstFromEmpty = selected === null;
+      reversedDuringSnap = false;
+      returnToEmpty = false;
       burstIntent = 0;
     }
+    interruptSnapForDirection(Math.sign(delta));
+    clearSelectionForMotion();
     snapping = false;
     snapTarget = null;
-    const modeFactor = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? innerHeight : 1;
-    const delta = clamp(event.deltaY * modeFactor, -240, 240);
     burstIntent += delta * .004;
     velocity = clamp(velocity + delta * .016, -4.2, 4.2);
     ensureFrame();
     clearTimeout(snapTimer);
     snapTimer = setTimeout(settle, 125);
+  }
+
+  function interruptSnapForDirection(direction) {
+    if (!snapping || !burstActive || !direction || !burstIntent || Math.sign(burstIntent) === direction) return;
+    // Reversal cancels the old snap target instead of chasing it.
+    if (burstFromEmpty) returnToEmpty = true;
+    else {
+      burstAnchor = position;
+      burstFromEmpty = false;
+      reversedDuringSnap = true;
+    }
+    burstIntent = 0;
+    velocity = 0;
+    snapping = false;
+    snapTarget = null;
   }
 
   function onPointerDown(event) {
@@ -298,11 +393,15 @@
       burstActive = true;
       burstAnchor = selected === null ? position : selected;
       burstFromEmpty = selected === null;
+      reversedDuringSnap = false;
+      returnToEmpty = false;
       burstIntent = 0;
     }
+    const direction = dx < 0 ? 1 : -1;
+    interruptSnapForDirection(direction);
+    clearSelectionForMotion();
     snapping = false;
     snapTarget = null;
-    const direction = dx < 0 ? 1 : -1;
     const swipeImpulse = clamp(Math.abs(dx) / elapsed * 2.2, .8, 3.8);
     velocity = clamp(velocity + direction * swipeImpulse, -4.2, 4.2);
     burstIntent += direction * clamp(Math.abs(dx) / 180, .35, 1.6);
@@ -331,8 +430,12 @@
       });
     }
     article.append(poster);
+    const countdown = document.createElement('span');
+    countdown.className = 'play-countdown';
+    countdown.setAttribute('aria-hidden', 'true');
+    article.append(countdown);
     rail.append(article);
-    slides.push({ element: article, poster, frame: null });
+    slides.push({ element: article, poster, countdown, frame: null, player: null });
   });
 
   window.addEventListener('wheel', onWheel, { passive: false });
