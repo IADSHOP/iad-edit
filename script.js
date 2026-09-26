@@ -10,11 +10,14 @@
   const totalLabel = document.querySelector('#total');
   const empty = document.querySelector('#empty');
   const slides = [];
-  const centerMark = document.createElement('span');
-  centerMark.id = 'center-anchor';
-  centerMark.textContent = 'IAD';
-  centerMark.setAttribute('aria-hidden', 'true');
-  stage.append(centerMark);
+  const viewingAnchor = document.createElement('img');
+  viewingAnchor.className = 'viewing-anchor';
+  viewingAnchor.src = '本人圖.jfif';
+  viewingAnchor.alt = '本人與三明治背對鏡頭，位於中央觀看位置';
+  viewingAnchor.loading = 'eager';
+  viewingAnchor.decoding = 'async';
+  viewingAnchor.draggable = false;
+  stage.append(viewingAnchor);
 
   // Start in the gap between the last and first works: no work is selected yet.
   let position = works.length ? works.length - .5 : 0;
@@ -33,7 +36,6 @@
   let snapTimer = 0;
   let playbackTimer = 0;
   let infoTimer = 0;
-  let countdownTimer = 0;
   let youtubeApiPromise = null;
   let hasInteracted = false;
   let touchStart = null;
@@ -80,9 +82,9 @@
   }
 
   function clearCountdown() {
-    clearTimeout(countdownTimer);
-    countdownTimer = 0;
     slides.forEach(slide => {
+      slide.element.classList.remove('is-preparing');
+      slide.shade.classList.remove('is-visible');
       slide.countdown.classList.remove('is-visible', 'is-waiting');
       slide.countdown.textContent = '';
     });
@@ -90,28 +92,21 @@
 
   function beginCountdown(index) {
     clearCountdown();
-    const countdown = slides[index]?.countdown;
+    const slide = slides[index];
+    const countdown = slide?.countdown;
     if (!countdown) return;
-    let value = 3;
-    countdown.textContent = String(value);
+    slide.element.classList.add('is-preparing');
+    slide.shade.classList.add('is-visible');
+    countdown.textContent = '3';
     countdown.classList.add('is-visible');
+  }
 
-    const advance = () => {
-      if (selected !== index) return;
-      countdown.classList.remove('is-visible');
-      countdownTimer = setTimeout(() => {
-        if (selected !== index) return;
-        if (value > 1) {
-          value -= 1;
-          countdown.textContent = String(value);
-          countdown.classList.add('is-visible');
-          countdownTimer = setTimeout(advance, 300);
-        } else {
-          countdown.classList.add('is-waiting', 'is-visible');
-        }
-      }, 100);
-    };
-    countdownTimer = setTimeout(advance, 300);
+  function setCountdownStep(index, step) {
+    const slide = slides[index];
+    if (!slide || selected !== index || !slide.element.classList.contains('is-preparing')) return;
+    slide.countdown.textContent = String(step);
+    slide.countdown.classList.add('is-visible');
+    slide.countdown.classList.toggle('is-waiting', step === 3);
   }
 
   function stopPlayback() {
@@ -183,8 +178,11 @@
     const slide = slides[index];
     if (data.type === 'onPlayerReady') {
       const target = 'https://www.tiktok.com';
+      setCountdownStep(index, 2);
       slide.frame.contentWindow.postMessage({ 'x-tiktok-player': true, type: 'mute' }, target);
       slide.frame.contentWindow.postMessage({ 'x-tiktok-player': true, type: 'play' }, target);
+    } else if (data.type === 'onStateChange' && data.value === 3) {
+      setCountdownStep(index, 1);
     } else if (data.type === 'onStateChange' && data.value === 1) {
       revealIfPlaying(slide, index);
     }
@@ -217,11 +215,13 @@
                 event.target.destroy();
                 return;
               }
+              setCountdownStep(index, 2);
               event.target.mute();
               event.target.playVideo();
             },
             onStateChange: event => {
-              if (event.data === 1) revealIfPlaying(slide, index);
+              if (event.data === 3) setCountdownStep(index, 1);
+              else if (event.data === 1) revealIfPlaying(slide, index);
             }
           }
         });
@@ -261,7 +261,7 @@
       card.classList.toggle('is-side', selected !== index);
       card.setAttribute('aria-hidden', abs < .5 ? 'false' : 'true');
     });
-    centerMark.style.opacity = String(clamp(nearestDistance * 2, 0, 1));
+    viewingAnchor.style.opacity = String(clamp(nearestDistance * 2, 0, 1));
   }
 
   function settle() {
@@ -269,7 +269,9 @@
     const projected = position + velocity / 6.2;
     const displacement = projected - burstAnchor;
     let stepCount = Math.round(Math.abs(displacement));
-    if (Math.abs(burstIntent) >= .02) stepCount = Math.max(1, stepCount);
+    // Even a very small but non-zero wheel input should resolve to one snap step.
+    // Larger gestures still accumulate through projected momentum below.
+    if (burstIntent !== 0) stepCount = Math.max(1, stepCount);
     if (burstFromEmpty && burstIntent !== 0) stepCount = Math.max(1, stepCount);
     stepCount = Math.min(4, stepCount);
     const direction = Math.sign(Math.abs(displacement) >= .02 ? displacement : burstIntent);
@@ -430,12 +432,16 @@
       });
     }
     article.append(poster);
+    const shade = document.createElement('span');
+    shade.className = 'play-shade';
+    shade.setAttribute('aria-hidden', 'true');
+    article.append(shade);
     const countdown = document.createElement('span');
     countdown.className = 'play-countdown';
     countdown.setAttribute('aria-hidden', 'true');
     article.append(countdown);
     rail.append(article);
-    slides.push({ element: article, poster, countdown, frame: null, player: null });
+    slides.push({ element: article, poster, shade, countdown, frame: null, player: null });
   });
 
   window.addEventListener('wheel', onWheel, { passive: false });
