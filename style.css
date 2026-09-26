@@ -12,20 +12,18 @@ body { overflow: hidden; background: var(--bg); color: var(--fg); font-family: M
 main { min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding: 74px 0 104px; }
 .gallery { height: min(61vh, 610px); min-height: 290px; position: relative; perspective: 1400px; perspective-origin: 50% 48%; }
 .stage { position: absolute; inset: 0; outline: none; touch-action: pan-y; transform-style: preserve-3d; }
-.stage.is-empty::after { content: ""; position: absolute; z-index: 30; inset: 0 24vw; background: linear-gradient(90deg, transparent, var(--bg) 23%, var(--bg) 77%, transparent); pointer-events: none; opacity: 1; transition: opacity 180ms ease; }
-.stage:not(.is-empty)::after { opacity: 0; }
-.viewing-anchor { position: absolute; z-index: 31; top: 50%; left: 50%; display: block; width: min(28vw, 420px); height: auto; max-height: 62vh; object-fit: contain; transform: translate(-50%, -50%) translateZ(14px); pointer-events: none; user-select: none; -webkit-user-select: none; transition: opacity 420ms ease; }
 .rail { position: absolute; inset: 0; transform-style: preserve-3d; }
-.slide { position: absolute; top: 50%; left: 50%; width: min(52vw, 760px); height: min(29.25vw, 427px); max-height: 58vh; min-height: 190px; overflow: hidden; background: #d5d5d1; outline: 1px solid rgba(38, 38, 35, .14); outline-offset: -1px; transform-style: preserve-3d; user-select: none; -webkit-user-select: none; }
+.slide { position: absolute; top: 50%; left: 50%; width: min(52vw, 760px); height: min(29.25vw, 427px); max-height: 58vh; min-height: 190px; overflow: hidden; background: #d5d5d1; outline: 1px solid rgba(38, 38, 35, .14); outline-offset: -1px; transform-style: preserve-3d; container-type: inline-size; user-select: none; -webkit-user-select: none; }
+.slide-anchor { background: var(--bg); }
+.slide-anchor .slide-poster { object-fit: contain; background: transparent; }
 .slide-poster { position: absolute; inset: 0; z-index: 2; display: block; width: 100%; height: 100%; object-fit: cover; background: #d5d5d1; pointer-events: none; opacity: 1; transition: opacity 420ms ease; }
 .play-shade { position: absolute; z-index: 3; inset: 0; background: rgba(0,0,0,.52); opacity: 0; pointer-events: none; transition: opacity 240ms ease; }
-.slide.is-preparing .play-shade { opacity: 1; }
-.play-countdown { position: absolute; z-index: 4; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-family: 'DM Mono', monospace; font-size: clamp(28px, 4.6vw, 74px); font-weight: 400; line-height: 1; opacity: 0; pointer-events: none; transition: opacity 140ms ease; }
-.play-countdown.is-visible { opacity: 1; }
-.play-countdown.is-waiting { opacity: .34; }
+.slide.is-selected:not(.is-playing) .play-shade { opacity: 1; }
+.play-trigger { position: absolute; z-index: 4; top: 50%; left: 50%; transform: translate(-50%, -50%); appearance: none; padding: 0; border: 0; background: transparent; color: #fff; font-family: Arial, sans-serif; font-size: clamp(24px, 9cqw, 74px); font-weight: 400; line-height: 1; opacity: 0; pointer-events: none; cursor: pointer; transition: opacity 180ms ease; }
+.slide.is-selected:not(.is-playing):not(.is-loading) .play-trigger { opacity: 1; pointer-events: auto; }
+.play-trigger:focus-visible { outline: 1px solid rgba(255,255,255,.75); outline-offset: 5px; }
 .slide.is-playing .play-shade { opacity: 0; }
-.slide.is-playing .play-countdown { opacity: 0; }
-.embed-frame { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; border: 0; background: #101010; }
+.embed-frame { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; border: 0; background: #101010; pointer-events: none; }
 .embed-frame[hidden] { display: none; }
 .slide::after { content: ""; position: absolute; inset: 0; background: rgba(5,5,5,.13); transition: opacity 600ms ease; pointer-events: none; }
 .slide.is-active::after { opacity: 0; }
@@ -50,9 +48,8 @@ main { min-height: 100svh; display: flex; flex-direction: column; justify-conten
   .topbar { height: 60px; padding: 0 6vw; }.edition { font-size: 8px; }
   main { padding: 58px 0 116px; }
   .gallery { height: 54vh; min-height: 280px; perspective: 950px; }
-  .stage.is-empty::after { inset-inline: 20vw; }
-  .viewing-anchor { width: min(44vw, 280px); max-height: 52vh; }
   .slide { width: 72vw; height: 48vw; min-height: 0; max-height: 44vh; }
+  .play-trigger { font-size: clamp(24px, 9cqw, 56px); }
   .caption { inset: auto 6vw 64px; min-height: 78px; grid-template-columns: 1fr auto; row-gap: 17px; }
   .work-info { grid-column: 1 / 3; grid-row: 1; align-self: start; }
   .work-info h1 { max-width: 88vw; font-size: clamp(16px, 5vw, 23px); }.counter { grid-column: 2; grid-row: 2; }
