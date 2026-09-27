@@ -219,21 +219,35 @@
     const count = items.length;
     totalLabel.textContent = pad(slides.length);
     empty.hidden = true;
+    const wrappedPosition = wrap(position, count);
+    const anchorDistance = Math.min(wrappedPosition, count - wrappedPosition);
+    const personProgress = clamp(anchorDistance, 0, 1);
+    const personScale = 1 - personProgress * .25;
+    const personY = personProgress * innerHeight * .18;
     items.forEach((slide, index) => {
       let delta = index - position;
       delta = ((delta + count / 2) % count + count) % count - count / 2;
       const abs = Math.abs(delta);
-      const scale = abs < 1 ? 1 - abs * .24 : abs < 2 ? .76 - (abs - 1) * .26 : Math.max(.28, .50 - (abs - 2) * .075);
-      const opacity = abs < 1 ? 1 - abs * .24 : abs < 2 ? .76 - (abs - 1) * .28 : Math.max(.12, .48 - (abs - 2) * .12);
-      const blur = abs < 1 ? abs * .35 : abs < 2 ? .35 + (abs - 1) * .45 : Math.min(1.8, .8 + (abs - 2) * .2);
-      const x = delta * (innerWidth < 700 ? 57 : 44);
-      const rotateY = delta * -34;
-      const translateZ = -Math.min(abs, 4) * (innerWidth < 700 ? 105 : 150);
       const card = slide.element;
+      if (slide.isAnchor) {
+        card.style.transform = `translate(-50%, -50%) translateY(${personY}px) translateZ(${-personProgress * 130}px) scale(${personScale})`;
+        card.style.opacity = '1';
+        card.style.filter = 'none';
+        card.style.outlineColor = 'rgba(38, 38, 35, .08)';
+        card.style.zIndex = '8';
+        card.setAttribute('aria-hidden', 'false');
+        return;
+      }
+      const scale = abs < 1 ? 1 - abs * .42 : abs < 2 ? .58 - (abs - 1) * .18 : Math.max(.16, .40 - (abs - 2) * .055);
+      const opacity = abs < 1 ? 1 - abs * .27 : abs < 2 ? .73 - (abs - 1) * .20 : Math.max(.14, .53 - (abs - 2) * .10);
+      const blur = abs < 1 ? abs * .3 : abs < 2 ? .3 + (abs - 1) * .4 : Math.min(1.6, .7 + (abs - 2) * .18);
+      const x = delta * (innerWidth < 700 ? 65 : 64);
+      const rotateY = delta * -32;
+      const translateZ = -Math.min(abs, 4) * (innerWidth < 700 ? 95 : 135);
       card.style.transform = `translate(-50%, -50%) translateX(${x}%) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
       card.style.opacity = String(opacity);
-      card.style.filter = `brightness(${Math.max(.8, 1 - abs * .055)}) blur(${blur}px)`;
-      card.style.outlineColor = `rgba(38, 38, 35, ${Math.max(.025, .15 - abs * .04)})`;
+      card.style.filter = `brightness(${Math.max(.84, 1 - abs * .045)}) blur(${blur}px)`;
+      card.style.outlineColor = `rgba(38, 38, 35, ${Math.max(.025, .13 - abs * .032)})`;
       card.style.zIndex = String(20 - Math.round(abs * 2));
       const isSelected = !burstActive && !snapping && (index === 0 ? selected === null : selected === index - 1);
       card.classList.toggle('is-active', isSelected);
@@ -486,7 +500,7 @@
     const playButton = document.createElement('button');
     playButton.className = 'play-trigger';
     playButton.type = 'button';
-    playButton.textContent = '▶';
+    playButton.innerHTML = '<svg class="play-triangle" viewBox="0 0 160 90" aria-hidden="true" focusable="false"><polygon points="14,4 148,45 14,86"></polygon></svg>';
     playButton.setAttribute('aria-label', `播放作品 ${work.title}`);
     playButton.addEventListener('click', event => {
       event.stopPropagation();

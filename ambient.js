@@ -1,36 +1,45 @@
 (() => {
   const audio = document.createElement('audio');
-  const toggle = document.querySelector('[data-sound-toggle]');
-  const targetVolume = 0.05;
-  let enabled = false;
-  let interacted = false;
-  let manualChoice = false;
+  const toggle = document.querySelector('[data-music-toggle]');
+  const volumeInput = document.querySelector('[data-music-volume]');
+  const volumeLabel = document.querySelector('[data-music-level]');
+  let userMusicVolume = 0.01;
+  let musicManuallyPaused = false;
+  let playRequested = false;
   let videoPlaying = false;
+  let hasInteracted = false;
   let fadeTimer = 0;
 
   audio.loop = true;
   audio.preload = 'none';
-  audio.volume = 0;
-  audio.setAttribute('data-level', '0');
+  audio.volume = userMusicVolume;
+  audio.setAttribute('data-level', String(userMusicVolume));
   audio.src = 'audio/background.mp3';
   audio.hidden = true;
   audio.setAttribute('aria-hidden', 'true');
   document.body.append(audio);
 
-  function updateToggle() {
-    if (!toggle) return;
-    toggle.textContent = enabled ? 'SOUND ON' : 'SOUND OFF';
-    toggle.setAttribute('aria-pressed', String(enabled));
-    toggle.setAttribute('aria-label', enabled ? '關閉背景音樂' : '開啟背景音樂');
+  function reflectVolume() {
+    if (volumeInput) volumeInput.value = String(Math.round(userMusicVolume * 100));
+    if (volumeLabel) volumeLabel.value = String(Math.round(userMusicVolume * 100)).padStart(2, '0');
   }
 
-  function fadeTo(target, durationMs) {
+  function updateControl() {
+    if (!toggle) return;
+    const shouldPlay = playRequested && !musicManuallyPaused;
+    toggle.textContent = shouldPlay ? 'PAUSE' : 'PLAY';
+    toggle.setAttribute('aria-pressed', String(shouldPlay));
+    toggle.setAttribute('aria-label', shouldPlay ? '暫停背景音樂' : '播放背景音樂');
+  }
+
+  function fadeTo(target, durationMs, pauseAtEnd = false) {
     clearInterval(fadeTimer);
     const startVolume = audio.volume;
     const startedAt = performance.now();
     if (durationMs <= 0) {
       audio.volume = target;
       audio.setAttribute('data-level', String(target));
+      if (pauseAtEnd) audio.pause();
       return;
     }
     fadeTimer = window.setInterval(() => {
@@ -43,62 +52,92 @@
         audio.setAttribute('data-level', String(target));
         clearInterval(fadeTimer);
         fadeTimer = 0;
-        if (target === 0 && !enabled && !videoPlaying) audio.pause();
+        if (pauseAtEnd) audio.pause();
       }
     }, 40);
   }
 
-  async function playAtLowVolume(fadeDuration = 2500, mutedStart = false) {
-    if (!enabled || videoPlaying) return;
+  async function startMusic(duration = 2500) {
+    if (musicManuallyPaused || !playRequested) return;
+    if (videoPlaying) {
+      fadeTo(0, 0);
+      updateControl();
+      return;
+    }
     try {
-      if (mutedStart) audio.muted = true;
+      if (audio.paused) {
+        audio.volume = 0;
+        audio.setAttribute('data-level', '0');
+      }
       await audio.play();
-      if (mutedStart) audio.muted = false;
-      if (enabled && !videoPlaying) fadeTo(targetVolume, fadeDuration);
+      if (playRequested && !musicManuallyPaused && !videoPlaying) fadeTo(userMusicVolume, duration);
     } catch {
-      audio.muted = false;
-      enabled = false;
-      updateToggle();
+      playRequested = false;
+      updateControl();
     }
   }
 
-  function activateFromInteraction(event) {
-    interacted = true;
-    if (event?.target?.closest?.('[data-sound-toggle]')) return;
-    if (!manualChoice) enabled = true;
-    updateToggle();
-    if (enabled && !videoPlaying) playAtLowVolume(event?.target?.closest?.('.play-trigger') ? 1800 : 2500, event?.type === 'wheel');
+  function tryFirstInteraction(event) {
+    hasInteracted = true;
+    if (event?.target?.closest?.('.music-bar')) return;
+    if (!playRequested && !musicManuallyPaused) {
+      playRequested = true;
+      updateControl();
+      startMusic(2500);
+    }
   }
 
   toggle?.addEventListener('click', () => {
-    manualChoice = true;
-    interacted = true;
-    enabled = !enabled;
-    updateToggle();
-    if (enabled && !videoPlaying) playAtLowVolume(1800);
-    else if (enabled) {
-      fadeTo(0, 0);
-      audio.play().catch(() => {});
-    } else fadeTo(0, 700);
+    hasInteracted = true;
+    if (playRequested && !musicManuallyPaused) {
+      musicManuallyPaused = true;
+      playRequested = false;
+      fadeTo(0, 600, true);
+    } else {
+      musicManuallyPaused = false;
+      playRequested = true;
+      if (videoPlaying) fadeTo(0, 0);
+      else startMusic(2200);
+    }
+    updateControl();
   });
 
-  window.addEventListener('wheel', activateFromInteraction, { capture: true, passive: true });
-  window.addEventListener('pointerup', activateFromInteraction, { capture: true, passive: true });
+  volumeInput?.addEventListener('input', () => {
+    userMusicVolume = Math.max(0, Math.min(1, Number(volumeInput.value) / 100));
+    reflectVolume();
+    if (videoPlaying || musicManuallyPaused) return;
+    if (playRequested) fadeTo(userMusicVolume, 350);
+  });
+
+  window.addEventListener('wheel', tryFirstInteraction, { capture: true, passive: true });
+  window.addEventListener('pointerup', tryFirstInteraction, { capture: true, passive: true });
 
   window.IAD_BGM = {
     videoStarted() {
       videoPlaying = true;
-      fadeTo(0, 800);
+      if (playRequested && !musicManuallyPaused) fadeTo(0, 800);
     },
     videoStopped() {
       videoPlaying = false;
-      if (enabled && interacted) playAtLowVolume(1800);
-      else if (!enabled) audio.pause();
+      if (playRequested && !musicManuallyPaused) startMusic(1800);
+      else {
+        fadeTo(0, 0);
+        audio.pause();
+      }
     },
     state() {
-      return { enabled, interacted, videoPlaying, volume: audio.volume, playing: !audio.paused };
+      return {
+        playRequested,
+        musicManuallyPaused,
+        hasInteracted,
+        videoPlaying,
+        userMusicVolume,
+        volume: audio.volume,
+        playing: !audio.paused
+      };
     }
   };
 
-  updateToggle();
+  reflectVolume();
+  updateControl();
 })();

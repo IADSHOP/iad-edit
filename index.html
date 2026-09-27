@@ -12,7 +12,7 @@
   <script src="script.js?v=ambient-final-20260928" defer></script>
 </head>
 <body>
-  <header class="topbar" aria-label="網站標題"><a class="wordmark" href="#" aria-label="IAD EDIT 首頁">IAD <span>EDIT</span></a><div class="topbar-meta"><span class="edition">VIDEO EDITING&nbsp; / &nbsp;2017</span><button class="sound-toggle" type="button" data-sound-toggle aria-pressed="false" aria-label="開啟背景音樂">SOUND OFF</button></div></header>
+  <header class="topbar" aria-label="網站標題"><a class="wordmark" href="#" aria-label="IAD EDIT 首頁">IAD <span>EDIT</span></a><div class="topbar-meta"><span class="edition">VIDEO EDITING&nbsp; / &nbsp;2017</span></div></header>
   <main>
     <section class="gallery" aria-label="影片作品輪播" aria-roledescription="carousel">
       <div class="stage" id="stage" aria-label="影片作品展示區">
@@ -30,5 +30,11 @@
     <a href="pricing.html">價格方案</a>
     <a href="about.html">關於我們</a>
   </nav>
+  <section class="music-bar" aria-label="背景音樂控制">
+    <button class="music-toggle" type="button" data-music-toggle aria-pressed="false" aria-label="播放背景音樂">PLAY</button>
+    <span class="music-label">BACKGROUND AUDIO</span>
+    <input class="music-volume" data-music-volume type="range" min="0" max="100" step="1" value="1" aria-label="背景音樂音量">
+    <output class="music-level" data-music-level for="music-volume">01</output>
+  </section>
 </body>
 </html>
