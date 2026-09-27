@@ -21,6 +21,9 @@
 *.WMV
 *.flv
 *.FLV
+
+# The source audio file remains at the project root; the web-ready copy lives in audio/.
+/audiobackground.mp3.mp3
 *.3gp
 *.3GP
 *.ts

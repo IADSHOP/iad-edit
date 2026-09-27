@@ -5,6 +5,9 @@
 html, body { width: 100%; min-height: 100%; margin: 0; }
 body { overflow: hidden; background: var(--bg); color: var(--fg); font-family: Manrope, Arial, sans-serif; -webkit-font-smoothing: antialiased; cursor: default; }
 .topbar { position: absolute; z-index: 3; inset: 0 0 auto; height: 74px; padding: 0 5.2vw; display: flex; align-items: center; justify-content: space-between; }
+.topbar-meta { display: flex; align-items: center; gap: 18px; }
+.sound-toggle { appearance: none; padding: 0; border: 0; background: transparent; color: #777670; font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: .13em; cursor: default; transition: color 180ms ease; }
+.sound-toggle:hover { color: var(--fg); }
 .wordmark { color: var(--fg); text-decoration: none; font-size: 12px; font-weight: 700; letter-spacing: .13em; }
 .wordmark span { color: #777670; font-weight: 500; }
 .edition, .eyebrow, .work-type, .hint, .counter, .empty { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .13em; }
@@ -45,7 +48,7 @@ main { min-height: 100svh; display: flex; flex-direction: column; justify-conten
 .footer-links a:hover { color: #171716; }
 @media (min-width: 1500px) { .slide { width: 760px; height: 427px; } }
 @media (max-width: 700px) {
-  .topbar { height: 60px; padding: 0 6vw; }.edition { font-size: 8px; }
+  .topbar { height: 60px; padding: 0 6vw; }.edition { font-size: 8px; }.topbar-meta { gap: 12px; }.sound-toggle { font-size: 7px; }
   main { padding: 58px 0 116px; }
   .gallery { height: 54vh; min-height: 280px; perspective: 950px; }
   .slide { width: 72vw; height: 48vw; min-height: 0; max-height: 44vh; }

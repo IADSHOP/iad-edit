@@ -82,6 +82,7 @@
         slide.frame = null;
       }
     });
+    window.IAD_BGM?.videoStopped();
   }
 
   function videoId(work) {
@@ -141,6 +142,7 @@
       slide.frame.remove();
       slide.frame = null;
     }
+    window.IAD_BGM?.videoStopped();
   }
 
   function onTikTokMessage(event) {
@@ -168,6 +170,8 @@
     const work = works[index];
     const src = playbackUrl(work);
     if (!src) return;
+
+    window.IAD_BGM?.videoStarted();
 
     slide.playButton.disabled = true;
     slide.element.classList.add('is-loading');
@@ -356,6 +360,88 @@
     snapTimer = setTimeout(settle, 125);
   }
 
+  function renderAnchorCutout(image) {
+    if (!image.complete || !image.naturalWidth || !image.naturalHeight) return;
+    try {
+      const width = image.naturalWidth;
+      const height = image.naturalHeight;
+      const canvas = document.createElement('canvas');
+      canvas.className = 'slide-poster anchor-cutout';
+      canvas.width = width;
+      canvas.height = height;
+      canvas.setAttribute('role', 'img');
+      canvas.setAttribute('aria-label', image.alt);
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      context.drawImage(image, 0, 0);
+      const frame = context.getImageData(0, 0, width, height);
+      const pixels = frame.data;
+      const count = width * height;
+      const background = [0, 0, 0];
+      let samples = 0;
+      const top = Math.max(1, Math.floor(height * .02));
+      for (let x = Math.floor(width * .02); x < width * .98; x += 8) {
+        const offset = (top * width + x) * 4;
+        background[0] += pixels[offset];
+        background[1] += pixels[offset + 1];
+        background[2] += pixels[offset + 2];
+        samples++;
+      }
+      for (let channel = 0; channel < 3; channel++) background[channel] /= samples;
+
+      const isBackdrop = index => {
+        const r = pixels[index], g = pixels[index + 1], b = pixels[index + 2];
+        const lightness = (r + g + b) / 3;
+        const chroma = Math.max(r, g, b) - Math.min(r, g, b);
+        const dr = r - background[0], dg = g - background[1], db = b - background[2];
+        return lightness > 185 && chroma < 38 && dr * dr + dg * dg + db * db < 2500;
+      };
+
+      const mask = new Uint8Array(count);
+      const queue = new Int32Array(count);
+      let read = 0, write = 0;
+      const add = (x, y) => {
+        if (x < 0 || x >= width || y < 0 || y >= height) return;
+        const point = y * width + x;
+        if (mask[point]) return;
+        const offset = point * 4;
+        if (!isBackdrop(offset)) return;
+        mask[point] = 1;
+        queue[write++] = point;
+      };
+      for (let x = 0; x < width; x += 1) { add(x, 0); add(x, height - 1); }
+      for (let y = 1; y < height - 1; y += 1) { add(0, y); add(width - 1, y); }
+      while (read < write) {
+        const point = queue[read++];
+        const x = point % width;
+        const y = (point - x) / width;
+        add(x - 1, y); add(x + 1, y); add(x, y - 1); add(x, y + 1);
+      }
+
+      for (let point = 0; point < count; point++) {
+        if (!mask[point]) continue;
+        const offset = point * 4;
+        pixels[offset + 3] = 0;
+        const x = point % width;
+        const y = (point - x) / width;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx, ny = y + dy;
+          if (!dx && !dy || nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+          const neighbor = ny * width + nx;
+          if (mask[neighbor]) continue;
+          const near = neighbor * 4;
+          const dr = pixels[near] - background[0], dg = pixels[near + 1] - background[1], db = pixels[near + 2] - background[2];
+          const distance = Math.sqrt(dr * dr + dg * dg + db * db);
+          if (distance < 48) pixels[near + 3] = Math.min(pixels[near + 3], Math.round(clamp((distance - 8) / 40, 0, 1) * 255));
+        }
+      }
+      context.putImageData(frame, 0, 0);
+      image.replaceWith(canvas);
+      anchorSlide.poster = canvas;
+    } catch {
+      // Keep the original image visible if canvas processing is unavailable.
+    }
+  }
+
   const anchorElement = document.createElement('article');
   anchorElement.className = 'slide slide-anchor';
   anchorElement.setAttribute('role', 'group');
@@ -368,6 +454,7 @@
   anchorImage.loading = 'eager';
   anchorImage.decoding = 'async';
   anchorImage.draggable = false;
+  anchorImage.addEventListener('load', () => renderAnchorCutout(anchorImage), { once: true });
   anchorElement.append(anchorImage);
   rail.append(anchorElement);
   anchorSlide = { element: anchorElement, poster: anchorImage, isAnchor: true };
