@@ -8,6 +8,7 @@
   let playRequested = false;
   let videoPlaying = false;
   let hasInteracted = false;
+  let musicStarting = false;
   let fadeTimer = 0;
 
   audio.loop = true;
@@ -58,20 +59,23 @@
   }
 
   async function startMusic(duration = 2500) {
-    if (musicManuallyPaused || !playRequested) return;
+    if (musicManuallyPaused || !playRequested || musicStarting) return;
     if (videoPlaying) {
       fadeTo(0, 0);
       updateControl();
       return;
     }
     try {
+      musicStarting = true;
       if (audio.paused) {
         audio.volume = 0;
         audio.setAttribute('data-level', '0');
       }
       await audio.play();
+      musicStarting = false;
       if (playRequested && !musicManuallyPaused && !videoPlaying) fadeTo(userMusicVolume, duration);
     } catch {
+      musicStarting = false;
       playRequested = false;
       updateControl();
     }
@@ -113,10 +117,24 @@
   });
 
   window.addEventListener('wheel', tryFirstInteraction, { capture: true, passive: true });
+  window.addEventListener('pointerdown', tryFirstInteraction, { capture: true, passive: true });
   window.addEventListener('pointerup', tryFirstInteraction, { capture: true, passive: true });
+  window.addEventListener('touchstart', tryFirstInteraction, { capture: true, passive: true });
+  window.addEventListener('click', tryFirstInteraction, { capture: true, passive: true });
 
   window.IAD_BGM = {
     videoStarted() {
+      videoPlaying = true;
+      if (playRequested && !musicManuallyPaused) fadeTo(0, 800);
+    },
+    videoPaused() {
+      videoPlaying = false;
+      if (playRequested && !musicManuallyPaused) {
+        if (audio.paused) startMusic(1000);
+        else fadeTo(userMusicVolume, 1000);
+      }
+    },
+    videoResumed() {
       videoPlaying = true;
       if (playRequested && !musicManuallyPaused) fadeTo(0, 800);
     },

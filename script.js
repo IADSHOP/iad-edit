@@ -29,6 +29,7 @@
 
   const MIN_POSITION = -6;
   const MAX_POSITION = 6;
+  const FAN_OFFSETS = [0, .205, .285, .352, .407, .448, .475];
   const pad = n => String(n).padStart(2, '0');
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const mix = (a, b, t) => a + (b - a) * t;
@@ -80,8 +81,10 @@
     let hadPlayback = false;
     slides.forEach(slide => {
       if (slide.frame || slide.player) hadPlayback = true;
-      slide.element.classList.remove('is-playing', 'is-loading');
+      slide.element.classList.remove('is-playing', 'is-loading', 'is-paused');
       slide.playButton.disabled = false;
+      slide.playButton.setAttribute('aria-label', `播放 ${slide.work.title || slide.work.category}`);
+      slide.playButton.setAttribute('aria-pressed', 'false');
       clearTimeout(slide.fallbackTimer);
       slide.fallbackTimer = 0;
       slide.fallback?.remove();
@@ -138,19 +141,36 @@
 
   function revealIfPlaying(slide, index) {
     if (slide.frame && currentWorkIndex() === index && !snapping && !burstActive) {
+      const wasPaused = slide.element.classList.contains('is-paused');
       clearTimeout(slide.fallbackTimer);
       slide.fallbackTimer = 0;
       slide.element.classList.remove('is-loading');
       slide.playButton.disabled = false;
+      slide.element.classList.remove('is-paused');
       slide.element.classList.add('is-playing');
+      slide.playButton.setAttribute('aria-label', `暫停 ${slide.work.title || slide.work.category}`);
+      slide.playButton.setAttribute('aria-pressed', 'true');
+      if (wasPaused) window.IAD_BGM?.videoResumed();
     }
+  }
+
+  function markVideoPaused(slide) {
+    const wasPaused = slide.element.classList.contains('is-paused');
+    slide.element.classList.remove('is-playing', 'is-loading');
+    slide.element.classList.add('is-paused');
+    slide.playButton.disabled = false;
+    slide.playButton.setAttribute('aria-label', `繼續播放 ${slide.work.title || slide.work.category}`);
+    slide.playButton.setAttribute('aria-pressed', 'false');
+    if (!wasPaused) window.IAD_BGM?.videoPaused();
   }
 
   function restorePoster(slide, fallback = false) {
     clearTimeout(slide.fallbackTimer);
     slide.fallbackTimer = 0;
-    slide.element.classList.remove('is-playing', 'is-loading');
+    slide.element.classList.remove('is-playing', 'is-loading', 'is-paused');
     slide.playButton.disabled = false;
+    slide.playButton.setAttribute('aria-label', `播放 ${slide.work.title || slide.work.category}`);
+    slide.playButton.setAttribute('aria-pressed', 'false');
     if (slide.player) {
       try { slide.player.destroy(); } catch { /* The frame may already be navigating away. */ }
       slide.player = null;
@@ -186,6 +206,8 @@
       slide.frame.contentWindow.postMessage({ 'x-tiktok-player': true, type: 'play' }, target);
     } else if (data.type === 'onStateChange' && data.value === 1) {
       revealIfPlaying(slide, index);
+    } else if (data.type === 'onStateChange' && data.value === 2) {
+      markVideoPaused(slide);
     } else if (data.type === 'onError') {
       restorePoster(slide, true);
     }
@@ -194,7 +216,20 @@
   function startPlayback(index) {
     if (index !== currentWorkIndex() || snapping || burstActive || !works[index]) return;
     const slide = slides[index];
-    if (slide.frame) return;
+    if (slide.frame) {
+      if (slide.element.classList.contains('is-playing')) {
+        if (slide.player) slide.player.pauseVideo();
+        else slide.frame.contentWindow?.postMessage({ 'x-tiktok-player': true, type: 'pause' }, 'https://www.tiktok.com');
+        markVideoPaused(slide);
+      } else {
+        if (slide.player) slide.player.playVideo();
+        else slide.frame.contentWindow?.postMessage({ 'x-tiktok-player': true, type: 'play' }, 'https://www.tiktok.com');
+        slide.element.classList.remove('is-paused');
+        slide.element.classList.add('is-loading');
+        window.IAD_BGM?.videoResumed();
+      }
+      return;
+    }
     const work = works[index];
     const src = playbackUrl(work);
     if (!src) return;
@@ -238,6 +273,7 @@
             },
             onStateChange: event => {
               if (event.data === 1) revealIfPlaying(slide, index);
+            else if (event.data === 2) markVideoPaused(slide);
             },
             onError: () => {
               if (slide.frame === frame) restorePoster(slide);
@@ -253,8 +289,8 @@
   function render() {
     empty.hidden = true;
     const progress = clamp(Math.abs(position), 0, 1);
-    const personScale = 1 - progress * .30;
-    const personY = progress * innerHeight * .13;
+    const personScale = 1 - progress * .44;
+    const personY = progress * innerHeight * .18;
     anchorSlide.element.style.transform = `translate3d(-50%, calc(-50% + ${personY}px), ${-progress * 95}px) scale(${personScale})`;
     anchorSlide.element.style.opacity = '1';
     anchorSlide.element.style.zIndex = '12';
@@ -264,14 +300,17 @@
       const distance = Math.abs(delta);
       const sideDistance = Math.min(distance, 1);
       const scale = distance < 1
-        ? mix(1, .43, distance)
-        : Math.max(.17, .43 - (distance - 1) * .048);
+        ? mix(1, .34, distance)
+        : Math.max(.12, .34 - (distance - 1) * .052);
       const opacity = distance < 1
-        ? mix(1, .72, distance)
-        : Math.max(.16, .72 - (distance - 1) * .105);
-      const x = Math.sign(delta) * (sideDistance * innerWidth * .25 + Math.max(0, distance - 1) * innerWidth * .042);
+        ? mix(1, .78, distance)
+        : Math.max(.28, .78 - (distance - 1) * .085);
+      const fanDepth = clamp(distance, 0, 6);
+      const fanIndex = Math.min(5, Math.floor(fanDepth));
+      const fanOffset = mix(FAN_OFFSETS[fanIndex], FAN_OFFSETS[fanIndex + 1], fanDepth - fanIndex);
+      const x = Math.sign(delta) * fanOffset * innerWidth;
       const centerY = slide.work.aspectRatio.startsWith('9') ? -innerHeight * .27 : -innerHeight * .22;
-      const sideY = -innerHeight * .09 - Math.max(0, distance - 1) * innerHeight * .018;
+      const sideY = -innerHeight * (.09 + Math.max(0, fanDepth - 1) * .055);
       const y = distance < 1 ? mix(centerY, sideY, distance) : sideY;
       const rotateY = -Math.sign(delta) * Math.min(distance * 3.2, 20);
       const z = -Math.min(distance, 7) * 48;
@@ -416,6 +455,10 @@
     article.setAttribute('aria-roledescription', 'artwork');
     article.setAttribute('aria-label', `${work.position < 0 ? 'LEFT' : 'RIGHT'} ${pad(Math.abs(work.position))} of 06${work.title ? `: ${work.title}` : ''}`);
     article.style.aspectRatio = work.aspectRatio;
+    const depth = Math.abs(work.position) - 1;
+    const initialX = Math.sign(work.position) * (innerWidth * (.035 + depth * .012));
+    article.style.transform = `translate3d(calc(-50% + ${initialX}px), calc(-50% - ${innerHeight * .035}px), -${depth * 12}px) rotateY(${-Math.sign(work.position) * 4}deg) scale(.22)`;
+    article.style.opacity = '.58';
     const poster = document.createElement('img');
     poster.className = 'slide-poster';
     poster.src = work.thumbnail;
@@ -442,7 +485,9 @@
     playButton.className = 'play-trigger';
     playButton.type = 'button';
     playButton.innerHTML = '<svg class="play-triangle" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><polygon points="20,10 90,50 20,90"></polygon></svg>';
+    playButton.insertAdjacentHTML('beforeend', '<span class="pause-mark" aria-hidden="true">Ⅱ</span>');
     playButton.setAttribute('aria-label', `播放 ${work.title || work.category}`);
+    playButton.setAttribute('aria-pressed', 'false');
     playButton.addEventListener('click', event => {
       event.stopPropagation();
       startPlayback(index);
@@ -458,7 +503,7 @@
   anchorElement.setAttribute('aria-label', 'Xavier + Sandwich');
   const anchorImage = document.createElement('img');
   anchorImage.className = 'slide-poster';
-  anchorImage.src = 'xaviersandwich.jpg.png';
+  anchorImage.src = 'xaviersandwich.png';
   anchorImage.alt = 'Xavier + Sandwich';
   anchorImage.loading = 'eager';
   anchorImage.decoding = 'async';
@@ -475,6 +520,10 @@
   stage.addEventListener('pointercancel', () => { touchStart = null; });
   window.addEventListener('resize', render);
 
-  render();
   updateInfo(false);
+  gallery.classList.add('is-opening');
+  requestAnimationFrame(() => {
+    render();
+    window.setTimeout(() => gallery.classList.remove('is-opening'), 1850);
+  });
 })();

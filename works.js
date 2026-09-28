@@ -67,8 +67,7 @@ window.OFFCUT_WORKS = [
     category: "BRAND FILM",
     videoType: "youtube",
     videoSource: "https://youtube.com/shorts/-JPyYu9jKsg",
-    thumbnail: "https://i.ytimg.com/vi/-JPyYu9jKsg/maxresdefault.jpg",
-    thumbnailFallback: "https://i.ytimg.com/vi/-JPyYu9jKsg/hqdefault.jpg",
+    thumbnail: "右1封面.jpg",
     aspectRatio: "9 / 16"
   },
   {
@@ -77,7 +76,7 @@ window.OFFCUT_WORKS = [
     category: "REELS — SHOP INTRO",
     videoType: "tiktok",
     videoSource: "https://www.tiktok.com/@iadselectshop/video/7663028133146381588",
-    thumbnail: "作品對應封面圖 (6.jpg",
+    thumbnail: "右2封面.jpg",
     aspectRatio: "9 / 16"
   },
   {
@@ -86,8 +85,7 @@ window.OFFCUT_WORKS = [
     category: "BRAND FILM",
     videoType: "youtube",
     videoSource: "https://www.youtube.com/watch?v=7ohWVjHWdCY&feature=youtu.be",
-    thumbnail: "https://i.ytimg.com/vi/7ohWVjHWdCY/maxresdefault.jpg",
-    thumbnailFallback: "https://i.ytimg.com/vi/7ohWVjHWdCY/hqdefault.jpg",
+    thumbnail: "右3封面.jpg",
     aspectRatio: "16 / 9"
   },
   {
@@ -96,7 +94,7 @@ window.OFFCUT_WORKS = [
     category: "REELS — SHOP INTRO",
     videoType: "tiktok",
     videoSource: "https://www.tiktok.com/@iadselectshop/video/7523566043332234501",
-    thumbnail: "作品對應封面圖 (7.jpg",
+    thumbnail: "右4封面.jpg",
     aspectRatio: "9 / 16"
   },
   {
@@ -105,7 +103,7 @@ window.OFFCUT_WORKS = [
     category: "REELS — UNBOXING",
     videoType: "tiktok",
     videoSource: "https://www.tiktok.com/@iadselectshop/video/7344396168949992709",
-    thumbnail: "作品對應封面圖 (8.jpg",
+    thumbnail: "右5封面.jpg",
     aspectRatio: "9 / 16"
   },
   {
