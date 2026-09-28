@@ -1,9 +1,9 @@
 (() => {
   const audio = document.createElement('audio');
   const toggle = document.querySelector('[data-music-toggle]');
-  const volumeInput = document.querySelector('[data-music-volume]');
-  const volumeLabel = document.querySelector('[data-music-level]');
-  let userMusicVolume = 0.01;
+  const volumeButtons = Array.from(document.querySelectorAll('[data-music-level]'));
+  let userMusicLevel = 1;
+  let userMusicVolume = userMusicLevel / 100;
   let musicManuallyPaused = false;
   let playRequested = false;
   let videoPlaying = false;
@@ -21,8 +21,11 @@
   document.body.append(audio);
 
   function reflectVolume() {
-    if (volumeInput) volumeInput.value = String(Math.round(userMusicVolume * 100));
-    if (volumeLabel) volumeLabel.value = String(Math.round(userMusicVolume * 100)).padStart(2, '0');
+    volumeButtons.forEach(button => {
+      const selected = Number(button.dataset.musicLevel) === userMusicLevel;
+      button.classList.toggle('is-active', selected);
+      button.setAttribute('aria-pressed', String(selected));
+    });
   }
 
   function updateControl() {
@@ -83,7 +86,7 @@
 
   function tryFirstInteraction(event) {
     hasInteracted = true;
-    if (event?.target?.closest?.('.music-bar')) return;
+    if (event?.target?.closest?.('[data-music-toggle]')) return;
     if (!playRequested && !musicManuallyPaused) {
       playRequested = true;
       updateControl();
@@ -109,12 +112,15 @@
     updateControl();
   });
 
-  volumeInput?.addEventListener('input', () => {
-    userMusicVolume = Math.max(0, Math.min(1, Number(volumeInput.value) / 100));
+  volumeButtons.forEach(button => button.addEventListener('click', () => {
+    const level = Number(button.dataset.musicLevel);
+    if (!Number.isInteger(level) || level < 1 || level > 10) return;
+    userMusicLevel = level;
+    userMusicVolume = userMusicLevel / 100;
     reflectVolume();
     if (videoPlaying || musicManuallyPaused) return;
-    if (playRequested) fadeTo(userMusicVolume, 350);
-  });
+    if (playRequested) fadeTo(userMusicVolume, 300);
+  }));
 
   window.addEventListener('wheel', tryFirstInteraction, { capture: true, passive: true });
   window.addEventListener('pointerdown', tryFirstInteraction, { capture: true, passive: true });
@@ -152,6 +158,7 @@
         musicManuallyPaused,
         hasInteracted,
         videoPlaying,
+        userMusicLevel,
         userMusicVolume,
         volume: audio.volume,
         playing: !audio.paused

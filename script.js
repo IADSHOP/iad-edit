@@ -26,6 +26,7 @@
   let idleTimer = 0;
   let youtubeApiPromise = null;
   let touchStart = null;
+  let suppressClickUntil = 0;
 
   const MIN_POSITION = -6;
   const MAX_POSITION = 6;
@@ -413,18 +414,19 @@
   }
 
   function onPointerDown(event) {
-    if (event.pointerType === 'touch') touchStart = { x: event.clientX, y: event.clientY, time: performance.now() };
+    if (event.pointerType === 'touch') touchStart = { x: event.clientX, y: event.clientY, time: performance.now(), pointerId: event.pointerId };
   }
 
   function onPointerUp(event) {
-    if (!touchStart || event.pointerType !== 'touch') return;
+    if (!touchStart || event.pointerType !== 'touch' || event.pointerId !== touchStart.pointerId) return;
     const dx = event.clientX - touchStart.x;
     const dy = event.clientY - touchStart.y;
     const elapsed = Math.max(1, performance.now() - touchStart.time);
     touchStart = null;
-    if (Math.abs(dy) <= 35 || Math.abs(dy) <= Math.abs(dx) * 1.2) return;
-    const direction = dy < 0 ? -1 : 1;
+    if (Math.abs(dx) < 48 || Math.abs(dx) <= Math.abs(dy) * 1.25) return;
+    const direction = dx < 0 ? 1 : -1;
     if (!canMove(direction)) return;
+    suppressClickUntil = performance.now() + 450;
     setInteracting();
     stopPlayback();
     if (!burstActive) {
@@ -440,7 +442,7 @@
     clearInfoForMotion();
     snapping = false;
     snapTarget = null;
-    const swipeImpulse = clamp(Math.abs(dy) / elapsed * 1.4, .8, 3.8);
+    const swipeImpulse = clamp(Math.abs(dx) / elapsed * 1.1, .8, 3.8);
     velocity = clamp(velocity + direction * swipeImpulse, -4.2, 4.2);
     burstIntent += direction;
     ensureFrame();
@@ -516,8 +518,14 @@
   window.addEventListener('wheel', onWheel, { passive: false });
   window.addEventListener('message', onTikTokMessage);
   stage.addEventListener('pointerdown', onPointerDown);
-  stage.addEventListener('pointerup', onPointerUp);
-  stage.addEventListener('pointercancel', () => { touchStart = null; });
+  window.addEventListener('pointerup', onPointerUp, { capture: true });
+  window.addEventListener('pointercancel', () => { touchStart = null; }, { capture: true });
+  stage.addEventListener('click', event => {
+    if (performance.now() < suppressClickUntil) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  }, true);
   window.addEventListener('resize', render);
 
   updateInfo(false);
