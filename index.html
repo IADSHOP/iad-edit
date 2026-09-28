@@ -7,10 +7,10 @@
   <meta name="description" content="OFFCUT STUDIO — Digital Video Gallery">
   <meta name="application-name" content="OFFCUT STUDIO">
   <title>OFFCUT STUDIO — Digital Video Gallery</title>
-  <link rel="stylesheet" href="style.css?v=offcut-gallery-4">
-  <script src="works.js?v=offcut-gallery-4" defer></script>
-  <script src="ambient.js?v=offcut-gallery-4" defer></script>
-  <script src="script.js?v=offcut-gallery-4" defer></script>
+  <link rel="stylesheet" href="style.css?v=offcut-gallery-5">
+  <script src="works.js?v=offcut-gallery-5" defer></script>
+  <script src="ambient.js?v=offcut-gallery-5" defer></script>
+  <script src="script.js?v=offcut-gallery-5" defer></script>
 </head>
 <body>
   <header class="topbar" aria-label="網站標題"><a class="wordmark" href="index.html" aria-label="OFFCUT STUDIO 首頁"><img src="OFFCUTSTUDIO-transparent.png" alt="OFFCUT STUDIO"></a><div class="topbar-meta"><span class="edition">VIDEO EDITING&nbsp; / &nbsp;2017</span></div></header>
@@ -31,18 +31,17 @@
     <a href="pricing.html">價格方案</a>
   </nav>
   <section class="music-bar" aria-label="背景音樂控制">
-    <button class="music-toggle" type="button" data-music-toggle aria-pressed="false" aria-label="播放背景音樂">PLAY</button>
-    <div class="music-levels" data-music-levels role="group" aria-label="背景音樂音量等級">
-      <button class="music-level-button is-active" type="button" data-music-level="1" aria-label="LEVEL 1，1%" aria-pressed="true">1</button>
-      <button class="music-level-button" type="button" data-music-level="2" aria-label="LEVEL 2，2%" aria-pressed="false">2</button>
-      <button class="music-level-button" type="button" data-music-level="3" aria-label="LEVEL 3，3%" aria-pressed="false">3</button>
-      <button class="music-level-button" type="button" data-music-level="4" aria-label="LEVEL 4，4%" aria-pressed="false">4</button>
-      <button class="music-level-button" type="button" data-music-level="5" aria-label="LEVEL 5，5%" aria-pressed="false">5</button>
-      <button class="music-level-button" type="button" data-music-level="6" aria-label="LEVEL 6，6%" aria-pressed="false">6</button>
-      <button class="music-level-button" type="button" data-music-level="7" aria-label="LEVEL 7，7%" aria-pressed="false">7</button>
-      <button class="music-level-button" type="button" data-music-level="8" aria-label="LEVEL 8，8%" aria-pressed="false">8</button>
-      <button class="music-level-button" type="button" data-music-level="9" aria-label="LEVEL 9，9%" aria-pressed="false">9</button>
-      <button class="music-level-button" type="button" data-music-level="10" aria-label="LEVEL 10，10%" aria-pressed="false">10</button>
+    <button class="music-toggle" type="button" data-music-toggle aria-pressed="false" aria-label="播放背景音樂">
+      <span class="music-label-default">Background Music</span>
+      <span class="music-label-play" aria-hidden="true">PLAY</span>
+      <span class="music-label-pause" aria-hidden="true">PAUSE</span>
+    </button>
+    <div class="music-volume-control">
+      <svg class="music-speaker" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M3 8v4h3l4 3V5L6 8H3Z"/><path d="M13 7.2a4 4 0 0 1 0 5.6M15.2 5a7.1 7.1 0 0 1 0 10"/></svg>
+      <div class="music-volume-wrap">
+        <input id="music-volume" class="music-volume" data-music-volume type="range" min="1" max="5" step="1" value="1" aria-label="背景音樂音量，五段">
+        <span class="music-volume-ticks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+      </div>
     </div>
   </section>
 </body>

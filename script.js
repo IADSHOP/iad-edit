@@ -73,6 +73,7 @@
   }
 
   function setInteracting() {
+    gallery.classList.remove('is-opening');
     gallery.classList.add('is-interacting');
     clearTimeout(idleTimer);
     idleTimer = setTimeout(() => gallery.classList.remove('is-interacting'), 3800);
@@ -458,6 +459,7 @@
     article.setAttribute('aria-label', `${work.position < 0 ? 'LEFT' : 'RIGHT'} ${pad(Math.abs(work.position))} of 06${work.title ? `: ${work.title}` : ''}`);
     article.style.aspectRatio = work.aspectRatio;
     const depth = Math.abs(work.position) - 1;
+    article.style.setProperty('--gallery-stagger', `${depth * 70}ms`);
     const initialX = Math.sign(work.position) * (innerWidth * (.035 + depth * .012));
     article.style.transform = `translate3d(calc(-50% + ${initialX}px), calc(-50% - ${innerHeight * .035}px), -${depth * 12}px) rotateY(${-Math.sign(work.position) * 4}deg) scale(.22)`;
     article.style.opacity = '.58';
@@ -532,6 +534,6 @@
   gallery.classList.add('is-opening');
   requestAnimationFrame(() => {
     render();
-    window.setTimeout(() => gallery.classList.remove('is-opening'), 1850);
+    window.setTimeout(() => gallery.classList.remove('is-opening'), 1500);
   });
 })();
