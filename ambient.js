@@ -96,7 +96,10 @@
     } else {
       musicManuallyPaused = false;
       playRequested = true;
-      if (videoPlaying) fadeTo(0, 0);
+      if (videoPlaying) {
+        fadeTo(0, 0);
+        audio.play().catch(() => {});
+      }
       else startMusic(2200);
     }
     updateControl();

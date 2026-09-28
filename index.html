@@ -4,15 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#E8E8E5">
-  <meta name="description" content="IAD EDIT — 影片剪輯作品集">
-  <title>IAD EDIT — Film Portfolio</title>
-  <link rel="stylesheet" href="style.css?v=exhibition-refine-20260928">
+  <meta name="description" content="OFFCUT STUDIO — Digital Video Gallery">
+  <meta name="application-name" content="OFFCUT STUDIO">
+  <title>OFFCUT STUDIO — Digital Video Gallery</title>
+  <link rel="stylesheet" href="style.css?v=offcut-gallery-1">
   <script src="works.js" defer></script>
-  <script src="ambient.js?v=exhibition-refine-20260928" defer></script>
-  <script src="script.js?v=exhibition-refine-20260928" defer></script>
+  <script src="ambient.js?v=offcut-gallery-1" defer></script>
+  <script src="script.js?v=offcut-gallery-1" defer></script>
 </head>
 <body>
-  <header class="topbar" aria-label="網站標題"><a class="wordmark" href="#" aria-label="IAD EDIT 首頁">IAD <span>EDIT</span></a><div class="topbar-meta"><span class="edition">VIDEO EDITING&nbsp; / &nbsp;2017</span></div></header>
+  <header class="topbar" aria-label="網站標題"><a class="wordmark" href="index.html" aria-label="OFFCUT STUDIO 首頁"><img src="OFFCUTSTUDIO-transparent.png" alt="OFFCUT STUDIO"></a><div class="topbar-meta"><span class="edition">VIDEO EDITING&nbsp; / &nbsp;2017</span></div></header>
   <main>
     <section class="gallery" aria-label="影片作品輪播" aria-roledescription="carousel">
       <div class="stage" id="stage" aria-label="影片作品展示區">
@@ -21,10 +22,10 @@
       </div>
     </section>
     <footer class="caption">
-      <div class="work-info" aria-live="polite"><span class="eyebrow">SELECTED WORK</span><h1 id="work-title">—</h1><span class="work-type" id="work-type"></span></div>
-      <div class="counter"><span id="current">01</span><span class="counter-slash">/</span><span id="total">01</span></div>
+      <div class="work-info is-home" aria-live="polite"><span class="work-type" id="work-type"></span><h1 id="work-title"></h1><span class="work-badge" id="work-badge" hidden></span></div>
     </footer>
   </main>
+  <div class="counter" id="counter" aria-live="polite">HOME</div>
   <nav class="footer-links" aria-label="更多資訊">
     <a href="contact.html">聯繫我們</a>
     <a href="pricing.html">價格方案</a>
@@ -32,8 +33,7 @@
   </nav>
   <section class="music-bar" aria-label="背景音樂控制">
     <button class="music-toggle" type="button" data-music-toggle aria-pressed="false" aria-label="播放背景音樂">PLAY</button>
-    <span class="music-label">BACKGROUND AUDIO</span>
-    <input class="music-volume" data-music-volume type="range" min="0" max="100" step="1" value="1" aria-label="背景音樂音量">
+    <input id="music-volume" class="music-volume" data-music-volume type="range" min="0" max="100" step="1" value="1" aria-label="背景音樂音量">
     <output class="music-level" data-music-level for="music-volume">01</output>
   </section>
 </body>

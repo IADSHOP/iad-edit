@@ -1,19 +1,18 @@
 (() => {
-  const works = Array.isArray(window.IAD_WORKS) ? window.IAD_WORKS : [];
+  const works = Array.isArray(window.OFFCUT_WORKS) ? window.OFFCUT_WORKS : [];
   const rail = document.querySelector('#rail');
   const stage = document.querySelector('#stage');
+  const gallery = document.querySelector('.gallery');
   const info = document.querySelector('.work-info');
-  const counter = document.querySelector('.counter');
   const title = document.querySelector('#work-title');
   const type = document.querySelector('#work-type');
-  const currentLabel = document.querySelector('#current');
-  const totalLabel = document.querySelector('#total');
+  const badge = document.querySelector('#work-badge');
+  const counter = document.querySelector('#counter');
   const empty = document.querySelector('#empty');
   const slides = [];
   let anchorSlide;
-  // The opening image is carousel item 0; video works follow it at positions 1..N.
   let position = 0;
-  let selected = null;
+  let selected = 0;
   let velocity = 0;
   let frameId = 0;
   let lastFrame = 0;
@@ -24,54 +23,69 @@
   let burstActive = false;
   let snapTimer = 0;
   let infoTimer = 0;
+  let idleTimer = 0;
   let youtubeApiPromise = null;
   let touchStart = null;
 
-  const wrap = (n, length) => ((n % length) + length) % length;
+  const MIN_POSITION = -6;
+  const MAX_POSITION = 6;
   const pad = n => String(n).padStart(2, '0');
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  const mix = (a, b, t) => a + (b - a) * t;
+  const currentWorkIndex = () => works.findIndex(work => work.position === selected);
+
+  function updateCounter() {
+    if (selected === 0) counter.textContent = 'HOME';
+    else counter.textContent = `${selected < 0 ? 'L' : 'R'} ${pad(Math.abs(selected))} / 06`;
+  }
 
   function updateInfo(animate = true) {
     clearTimeout(infoTimer);
-    const hasSelection = selected !== null && works[selected];
-    info.classList.toggle('is-empty', !hasSelection);
-    if (animate && hasSelection) {
-      info.classList.add('is-changing');
-      counter.classList.add('is-changing');
-    }
+    const workIndex = currentWorkIndex();
+    const work = workIndex >= 0 ? works[workIndex] : null;
+    info.classList.toggle('is-home', !work);
+    if (animate && work) info.classList.add('is-changing');
     const apply = () => {
-      const work = hasSelection ? works[selected] : null;
       title.textContent = work?.title || '';
+      title.hidden = !work?.title;
       type.textContent = work?.category || '';
-      currentLabel.textContent = hasSelection ? pad(selected + 1) : '—';
+      badge.textContent = work?.badge || '';
+      badge.hidden = !work?.badge;
       info.classList.remove('is-changing');
-      counter.classList.remove('is-changing');
     };
-    if (animate && hasSelection) infoTimer = setTimeout(apply, 130);
+    if (animate && work) infoTimer = setTimeout(apply, 120);
     else apply();
+    updateCounter();
   }
 
-  function clearSelectionForMotion() {
-    if (selected === null) return;
-    selected = null;
+  function clearInfoForMotion() {
     clearTimeout(infoTimer);
     info.classList.add('is-changing');
-    counter.classList.add('is-changing');
     infoTimer = setTimeout(() => {
-      if (selected !== null) return;
+      if (!snapping && !burstActive) return;
       title.textContent = '';
       type.textContent = '';
-      currentLabel.textContent = '—';
-      info.classList.add('is-empty');
-      info.classList.remove('is-changing');
-      counter.classList.remove('is-changing');
-    }, 130);
+      badge.textContent = '';
+      badge.hidden = true;
+    }, 120);
+  }
+
+  function setInteracting() {
+    gallery.classList.add('is-interacting');
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => gallery.classList.remove('is-interacting'), 3800);
   }
 
   function stopPlayback() {
+    let hadPlayback = false;
     slides.forEach(slide => {
+      if (slide.frame || slide.player) hadPlayback = true;
       slide.element.classList.remove('is-playing', 'is-loading');
       slide.playButton.disabled = false;
+      clearTimeout(slide.fallbackTimer);
+      slide.fallbackTimer = 0;
+      slide.fallback?.remove();
+      slide.fallback = null;
       if (slide.player) {
         try { slide.player.destroy(); } catch { /* The frame may already be navigating away. */ }
         slide.player = null;
@@ -82,7 +96,7 @@
         slide.frame = null;
       }
     });
-    window.IAD_BGM?.videoStopped();
+    if (hadPlayback) window.IAD_BGM?.videoStopped();
   }
 
   function videoId(work) {
@@ -123,14 +137,18 @@
   }
 
   function revealIfPlaying(slide, index) {
-    if (slide.frame && selected === index && !snapping) {
+    if (slide.frame && currentWorkIndex() === index && !snapping && !burstActive) {
+      clearTimeout(slide.fallbackTimer);
+      slide.fallbackTimer = 0;
       slide.element.classList.remove('is-loading');
       slide.playButton.disabled = false;
       slide.element.classList.add('is-playing');
     }
   }
 
-  function restorePoster(slide) {
+  function restorePoster(slide, fallback = false) {
+    clearTimeout(slide.fallbackTimer);
+    slide.fallbackTimer = 0;
     slide.element.classList.remove('is-playing', 'is-loading');
     slide.playButton.disabled = false;
     if (slide.player) {
@@ -142,6 +160,16 @@
       slide.frame.remove();
       slide.frame = null;
     }
+    if (fallback && slide.work.videoType === 'tiktok') {
+      const link = document.createElement('a');
+      link.className = 'source-fallback';
+      link.href = slide.work.videoSource;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = 'OPEN ON TIKTOK';
+      slide.element.append(link);
+      slide.fallback = link;
+    }
     window.IAD_BGM?.videoStopped();
   }
 
@@ -150,7 +178,7 @@
     const data = event.data;
     if (!data || typeof data !== 'object' || data['x-tiktok-player'] !== true) return;
     const index = slides.findIndex(slide => slide.frame?.contentWindow === event.source);
-    if (index < 0 || index !== selected || snapping) return;
+    if (index < 0 || index !== currentWorkIndex() || snapping || burstActive) return;
     const slide = slides[index];
     if (data.type === 'onPlayerReady') {
       const target = 'https://www.tiktok.com';
@@ -159,12 +187,12 @@
     } else if (data.type === 'onStateChange' && data.value === 1) {
       revealIfPlaying(slide, index);
     } else if (data.type === 'onError') {
-      restorePoster(slide);
+      restorePoster(slide, true);
     }
   }
 
   function startPlayback(index) {
-    if (index !== selected || snapping || !works[index]) return;
+    if (index !== currentWorkIndex() || snapping || burstActive || !works[index]) return;
     const slide = slides[index];
     if (slide.frame) return;
     const work = works[index];
@@ -172,22 +200,28 @@
     if (!src) return;
 
     window.IAD_BGM?.videoStarted();
-
+    slide.fallback?.remove();
+    slide.fallback = null;
     slide.playButton.disabled = true;
     slide.element.classList.add('is-loading');
     const frame = document.createElement('iframe');
     frame.className = 'embed-frame';
-    frame.title = work.title || '作品影片';
+    frame.title = work.title || work.category;
     frame.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
     frame.allowFullscreen = true;
     frame.referrerPolicy = 'strict-origin-when-cross-origin';
-    frame.addEventListener('error', () => restorePoster(slide));
+    frame.addEventListener('error', () => restorePoster(slide, true));
     slide.frame = frame;
     frame.src = src;
     slide.element.append(frame);
+    if (work.videoType === 'tiktok') {
+      slide.fallbackTimer = setTimeout(() => {
+        if (slide.frame === frame && !slide.element.classList.contains('is-playing')) restorePoster(slide, true);
+      }, 14000);
+    }
     if (work.videoType === 'youtube') {
       loadYouTubeApi().then(YT => {
-        if (slide.frame !== frame || selected !== index || snapping) return;
+        if (slide.frame !== frame || index !== currentWorkIndex() || snapping || burstActive) return;
         if (!YT?.Player) {
           restorePoster(slide);
           return;
@@ -195,7 +229,7 @@
         slide.player = new YT.Player(frame, {
           events: {
             onReady: event => {
-              if (slide.frame !== frame || selected !== index || snapping) {
+              if (slide.frame !== frame || index !== currentWorkIndex() || snapping || burstActive) {
                 event.target.destroy();
                 return;
               }
@@ -210,89 +244,82 @@
             }
           }
         });
-      }).catch(() => {});
+      }).catch(() => {
+        if (slide.frame === frame) restorePoster(slide);
+      });
     }
   }
 
   function render() {
-    const items = [anchorSlide, ...slides];
-    const count = items.length;
-    totalLabel.textContent = pad(slides.length);
     empty.hidden = true;
-    const wrappedPosition = wrap(position, count);
-    const anchorDistance = Math.min(wrappedPosition, count - wrappedPosition);
-    const personProgress = clamp(anchorDistance, 0, 1);
-    const personScale = 1 - personProgress * .25;
-    const personY = personProgress * innerHeight * .18;
-    items.forEach((slide, index) => {
-      let delta = index - position;
-      delta = ((delta + count / 2) % count + count) % count - count / 2;
-      const abs = Math.abs(delta);
+    const progress = clamp(Math.abs(position), 0, 1);
+    const personScale = 1 - progress * .30;
+    const personY = progress * innerHeight * .13;
+    anchorSlide.element.style.transform = `translate3d(-50%, calc(-50% + ${personY}px), ${-progress * 95}px) scale(${personScale})`;
+    anchorSlide.element.style.opacity = '1';
+    anchorSlide.element.style.zIndex = '12';
+
+    slides.forEach((slide, index) => {
+      const delta = slide.work.position - position;
+      const distance = Math.abs(delta);
+      const sideDistance = Math.min(distance, 1);
+      const scale = distance < 1
+        ? mix(1, .43, distance)
+        : Math.max(.17, .43 - (distance - 1) * .048);
+      const opacity = distance < 1
+        ? mix(1, .72, distance)
+        : Math.max(.16, .72 - (distance - 1) * .105);
+      const x = Math.sign(delta) * (sideDistance * innerWidth * .25 + Math.max(0, distance - 1) * innerWidth * .042);
+      const centerY = slide.work.aspectRatio.startsWith('9') ? -innerHeight * .27 : -innerHeight * .22;
+      const sideY = -innerHeight * .09 - Math.max(0, distance - 1) * innerHeight * .018;
+      const y = distance < 1 ? mix(centerY, sideY, distance) : sideY;
+      const rotateY = -Math.sign(delta) * Math.min(distance * 3.2, 20);
+      const z = -Math.min(distance, 7) * 48;
       const card = slide.element;
-      if (slide.isAnchor) {
-        card.style.transform = `translate(-50%, -50%) translateY(${personY}px) translateZ(${-personProgress * 130}px) scale(${personScale})`;
-        card.style.opacity = '1';
-        card.style.filter = 'none';
-        card.style.outlineColor = 'rgba(38, 38, 35, .08)';
-        card.style.zIndex = '8';
-        card.setAttribute('aria-hidden', 'false');
-        return;
-      }
-      const scale = abs < 1 ? 1 - abs * .42 : abs < 2 ? .58 - (abs - 1) * .18 : Math.max(.16, .40 - (abs - 2) * .055);
-      const opacity = abs < 1 ? 1 - abs * .27 : abs < 2 ? .73 - (abs - 1) * .20 : Math.max(.14, .53 - (abs - 2) * .10);
-      const blur = abs < 1 ? abs * .3 : abs < 2 ? .3 + (abs - 1) * .4 : Math.min(1.6, .7 + (abs - 2) * .18);
-      const x = delta * (innerWidth < 700 ? 65 : 64);
-      const rotateY = delta * -32;
-      const translateZ = -Math.min(abs, 4) * (innerWidth < 700 ? 95 : 135);
-      card.style.transform = `translate(-50%, -50%) translateX(${x}%) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
+      card.style.transform = `translate3d(calc(-50% + ${x}px), calc(-50% + ${y}px), ${z}px) rotateY(${rotateY}deg) scale(${scale})`;
       card.style.opacity = String(opacity);
-      card.style.filter = `brightness(${Math.max(.84, 1 - abs * .045)}) blur(${blur}px)`;
-      card.style.outlineColor = `rgba(38, 38, 35, ${Math.max(.025, .13 - abs * .032)})`;
-      card.style.zIndex = String(20 - Math.round(abs * 2));
-      const isSelected = !burstActive && !snapping && (index === 0 ? selected === null : selected === index - 1);
+      card.style.zIndex = String(distance < .5 ? 22 : Math.max(1, 11 - Math.round(distance)));
+      card.style.filter = 'none';
+      const isSelected = !burstActive && !snapping && slide.work.position === selected;
       card.classList.toggle('is-active', isSelected);
       card.classList.toggle('is-selected', isSelected);
       card.classList.toggle('is-side', !isSelected);
-      card.setAttribute('aria-hidden', abs < .5 ? 'false' : 'true');
+      card.setAttribute('aria-hidden', distance < .5 ? 'false' : 'true');
     });
   }
 
   function settle() {
-    if (!slides.length || !burstActive) return;
-    const projected = position + velocity / 6.2;
+    if (!burstActive) return;
+    const projected = clamp(position + velocity / 6.2, MIN_POSITION, MAX_POSITION);
     const direction = Math.sign(burstIntent);
-    const projectedTravel = Math.max(0, (projected - burstAnchor) * direction);
+    const projectedTravel = Math.abs(projected - burstAnchor);
     let stepCount = Math.max(Math.round(projectedTravel), Math.round(Math.abs(burstIntent)));
-    // A tiny input still moves one item; repeated inputs accumulate symmetrically.
     if (burstIntent !== 0) stepCount = Math.max(1, stepCount);
     stepCount = Math.min(4, stepCount);
-    snapTarget = direction && stepCount ? burstAnchor + direction * stepCount : burstAnchor;
+    snapTarget = clamp(burstAnchor + direction * stepCount, MIN_POSITION, MAX_POSITION);
+    if (!direction) snapTarget = clamp(Math.round(position + velocity / 6.2), MIN_POSITION, MAX_POSITION);
     snapping = true;
     velocity = 0;
     ensureFrame();
   }
 
   function finishSnap() {
-    const itemPosition = wrap(Math.round(snapTarget), slides.length + 1);
-    const next = itemPosition === 0 ? null : itemPosition - 1;
-    const changed = next !== selected;
-    selected = next;
-    position = snapTarget = itemPosition;
+    selected = clamp(Math.round(snapTarget), MIN_POSITION, MAX_POSITION);
+    position = snapTarget = selected;
     velocity = 0;
     snapping = false;
     burstActive = false;
     burstIntent = 0;
     render();
-    if (changed) updateInfo(true);
+    updateInfo(true);
   }
 
   function animate(time) {
     if (!lastFrame) lastFrame = time;
     const dt = Math.min(.04, Math.max(0, (time - lastFrame) / 1000));
     lastFrame = time;
-
     if (snapping && snapTarget !== null) {
-      position += (snapTarget - position) * (1 - Math.exp(-dt / .075));
+      position += (snapTarget - position) * (1 - Math.exp(-dt / .078));
       if (Math.abs(snapTarget - position) < .002) {
         finishSnap();
         frameId = 0;
@@ -300,10 +327,11 @@
         return;
       }
     } else {
-      position += velocity * dt;
+      const next = position + velocity * dt;
+      position = clamp(next, MIN_POSITION, MAX_POSITION);
+      if (position === MIN_POSITION && velocity < 0 || position === MAX_POSITION && velocity > 0) velocity = 0;
       velocity *= Math.exp(-6.2 * dt);
     }
-
     render();
     frameId = requestAnimationFrame(animate);
   }
@@ -312,20 +340,30 @@
     if (!frameId) frameId = requestAnimationFrame(animate);
   }
 
-  function onWheel(event) {
-    if (innerWidth <= 700 || !slides.length || !Number.isFinite(event.deltaY) || event.deltaY === 0) return;
-    event.preventDefault();
-    stopPlayback();
+  function canMove(delta) {
+    return !(position <= MIN_POSITION && delta < 0 && velocity <= 0)
+      && !(position >= MAX_POSITION && delta > 0 && velocity >= 0);
+  }
 
+  function onWheel(event) {
+    if (innerWidth <= 700 || !Number.isFinite(event.deltaY) || event.deltaY === 0) return;
+    event.preventDefault();
     const modeFactor = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? innerHeight : 1;
     const delta = clamp(event.deltaY * modeFactor, -240, 240);
+    if (!canMove(delta)) return;
+    setInteracting();
+    stopPlayback();
     if (!burstActive) {
       burstActive = true;
-      burstAnchor = selected === null ? 0 : selected + 1;
+      burstAnchor = selected;
       burstIntent = 0;
     }
-    interruptSnapForDirection(Math.sign(delta));
-    clearSelectionForMotion();
+    if (snapping && burstIntent && Math.sign(burstIntent) !== Math.sign(delta)) {
+      velocity = 0;
+      snapping = false;
+      snapTarget = null;
+    }
+    clearInfoForMotion();
     snapping = false;
     snapTarget = null;
     burstIntent += delta * .004;
@@ -335,38 +373,35 @@
     snapTimer = setTimeout(settle, 125);
   }
 
-  function interruptSnapForDirection(direction) {
-    if (!snapping || !burstActive || !direction || !burstIntent || Math.sign(burstIntent) === direction) return;
-    // Keep the signed accumulated input, so reversal cancels prior travel naturally.
-    velocity = 0;
-    snapping = false;
-    snapTarget = null;
-  }
-
   function onPointerDown(event) {
     if (event.pointerType === 'touch') touchStart = { x: event.clientX, y: event.clientY, time: performance.now() };
   }
 
   function onPointerUp(event) {
-    if (!touchStart || event.pointerType !== 'touch' || !slides.length) return;
+    if (!touchStart || event.pointerType !== 'touch') return;
     const dx = event.clientX - touchStart.x;
     const dy = event.clientY - touchStart.y;
     const elapsed = Math.max(1, performance.now() - touchStart.time);
     touchStart = null;
-    if (Math.abs(dx) <= 35 || Math.abs(dx) <= Math.abs(dy) * 1.2) return;
-
+    if (Math.abs(dy) <= 35 || Math.abs(dy) <= Math.abs(dx) * 1.2) return;
+    const direction = dy < 0 ? -1 : 1;
+    if (!canMove(direction)) return;
+    setInteracting();
     stopPlayback();
     if (!burstActive) {
       burstActive = true;
-      burstAnchor = selected === null ? 0 : selected + 1;
+      burstAnchor = selected;
       burstIntent = 0;
     }
-    const direction = dx < 0 ? 1 : -1;
-    interruptSnapForDirection(direction);
-    clearSelectionForMotion();
+    if (snapping && burstIntent && Math.sign(burstIntent) !== direction) {
+      velocity = 0;
+      snapping = false;
+      snapTarget = null;
+    }
+    clearInfoForMotion();
     snapping = false;
     snapTarget = null;
-    const swipeImpulse = clamp(Math.abs(dx) / elapsed * 2.2, .8, 3.8);
+    const swipeImpulse = clamp(Math.abs(dy) / elapsed * 1.4, .8, 3.8);
     velocity = clamp(velocity + direction * swipeImpulse, -4.2, 4.2);
     burstIntent += direction;
     ensureFrame();
@@ -374,124 +409,30 @@
     snapTimer = setTimeout(settle, 125);
   }
 
-  function renderAnchorCutout(image) {
-    if (!image.complete || !image.naturalWidth || !image.naturalHeight) return;
-    try {
-      const width = image.naturalWidth;
-      const height = image.naturalHeight;
-      const canvas = document.createElement('canvas');
-      canvas.className = 'slide-poster anchor-cutout';
-      canvas.width = width;
-      canvas.height = height;
-      canvas.setAttribute('role', 'img');
-      canvas.setAttribute('aria-label', image.alt);
-      const context = canvas.getContext('2d', { willReadFrequently: true });
-      context.drawImage(image, 0, 0);
-      const frame = context.getImageData(0, 0, width, height);
-      const pixels = frame.data;
-      const count = width * height;
-      const background = [0, 0, 0];
-      let samples = 0;
-      const top = Math.max(1, Math.floor(height * .02));
-      for (let x = Math.floor(width * .02); x < width * .98; x += 8) {
-        const offset = (top * width + x) * 4;
-        background[0] += pixels[offset];
-        background[1] += pixels[offset + 1];
-        background[2] += pixels[offset + 2];
-        samples++;
-      }
-      for (let channel = 0; channel < 3; channel++) background[channel] /= samples;
-
-      const isBackdrop = index => {
-        const r = pixels[index], g = pixels[index + 1], b = pixels[index + 2];
-        const lightness = (r + g + b) / 3;
-        const chroma = Math.max(r, g, b) - Math.min(r, g, b);
-        const dr = r - background[0], dg = g - background[1], db = b - background[2];
-        return lightness > 185 && chroma < 38 && dr * dr + dg * dg + db * db < 2500;
-      };
-
-      const mask = new Uint8Array(count);
-      const queue = new Int32Array(count);
-      let read = 0, write = 0;
-      const add = (x, y) => {
-        if (x < 0 || x >= width || y < 0 || y >= height) return;
-        const point = y * width + x;
-        if (mask[point]) return;
-        const offset = point * 4;
-        if (!isBackdrop(offset)) return;
-        mask[point] = 1;
-        queue[write++] = point;
-      };
-      for (let x = 0; x < width; x += 1) { add(x, 0); add(x, height - 1); }
-      for (let y = 1; y < height - 1; y += 1) { add(0, y); add(width - 1, y); }
-      while (read < write) {
-        const point = queue[read++];
-        const x = point % width;
-        const y = (point - x) / width;
-        add(x - 1, y); add(x + 1, y); add(x, y - 1); add(x, y + 1);
-      }
-
-      for (let point = 0; point < count; point++) {
-        if (!mask[point]) continue;
-        const offset = point * 4;
-        pixels[offset + 3] = 0;
-        const x = point % width;
-        const y = (point - x) / width;
-        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-          const nx = x + dx, ny = y + dy;
-          if (!dx && !dy || nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
-          const neighbor = ny * width + nx;
-          if (mask[neighbor]) continue;
-          const near = neighbor * 4;
-          const dr = pixels[near] - background[0], dg = pixels[near + 1] - background[1], db = pixels[near + 2] - background[2];
-          const distance = Math.sqrt(dr * dr + dg * dg + db * db);
-          if (distance < 48) pixels[near + 3] = Math.min(pixels[near + 3], Math.round(clamp((distance - 8) / 40, 0, 1) * 255));
-        }
-      }
-      context.putImageData(frame, 0, 0);
-      image.replaceWith(canvas);
-      anchorSlide.poster = canvas;
-    } catch {
-      // Keep the original image visible if canvas processing is unavailable.
-    }
-  }
-
-  const anchorElement = document.createElement('article');
-  anchorElement.className = 'slide slide-anchor';
-  anchorElement.setAttribute('role', 'group');
-  anchorElement.setAttribute('aria-roledescription', 'slide');
-  anchorElement.setAttribute('aria-label', '中央觀看位置：本人與三明治');
-  const anchorImage = document.createElement('img');
-  anchorImage.className = 'slide-poster';
-  anchorImage.src = '本人圖.jfif';
-  anchorImage.alt = '本人與三明治背對鏡頭';
-  anchorImage.loading = 'eager';
-  anchorImage.decoding = 'async';
-  anchorImage.draggable = false;
-  anchorImage.addEventListener('load', () => renderAnchorCutout(anchorImage), { once: true });
-  anchorElement.append(anchorImage);
-  rail.append(anchorElement);
-  anchorSlide = { element: anchorElement, poster: anchorImage, isAnchor: true };
-
   works.forEach((work, index) => {
     const article = document.createElement('article');
-    article.className = 'slide';
+    article.className = `slide${work.aspectRatio.startsWith('9') ? ' slide--portrait' : ''}`;
     article.setAttribute('role', 'group');
-    article.setAttribute('aria-roledescription', 'slide');
-    article.setAttribute('aria-label', `${index + 1} / ${works.length}: ${work.title}`);
+    article.setAttribute('aria-roledescription', 'artwork');
+    article.setAttribute('aria-label', `${work.position < 0 ? 'LEFT' : 'RIGHT'} ${pad(Math.abs(work.position))} of 06${work.title ? `: ${work.title}` : ''}`);
+    article.style.aspectRatio = work.aspectRatio;
     const poster = document.createElement('img');
     poster.className = 'slide-poster';
     poster.src = work.thumbnail;
-    poster.alt = work.title || '';
+    poster.alt = work.title || work.category;
     poster.loading = 'lazy';
     poster.decoding = 'async';
     poster.draggable = false;
-    if (work.thumbnailFallback) {
-      poster.addEventListener('error', () => {
-        const fallback = new URL(work.thumbnailFallback, document.baseURI).href;
-        if (poster.src !== fallback) poster.src = fallback;
-      });
-    }
+    poster.style.setProperty('--idle-duration', `${10 + (index % 5)}s`);
+    poster.style.setProperty('--idle-delay', `${-index * .7}s`);
+    poster.addEventListener('error', () => {
+      const fallback = work.thumbnailFallback && new URL(work.thumbnailFallback, document.baseURI).href;
+      if (fallback && poster.src !== fallback) {
+        poster.src = fallback;
+        return;
+      }
+      article.classList.add('poster-unavailable');
+    });
     article.append(poster);
     const shade = document.createElement('span');
     shade.className = 'play-shade';
@@ -500,16 +441,32 @@
     const playButton = document.createElement('button');
     playButton.className = 'play-trigger';
     playButton.type = 'button';
-    playButton.innerHTML = '<svg class="play-triangle" viewBox="0 0 160 90" aria-hidden="true" focusable="false"><polygon points="14,4 148,45 14,86"></polygon></svg>';
-    playButton.setAttribute('aria-label', `播放作品 ${work.title}`);
+    playButton.innerHTML = '<svg class="play-triangle" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><polygon points="20,10 90,50 20,90"></polygon></svg>';
+    playButton.setAttribute('aria-label', `播放 ${work.title || work.category}`);
     playButton.addEventListener('click', event => {
       event.stopPropagation();
       startPlayback(index);
     });
     article.append(playButton);
     rail.append(article);
-    slides.push({ element: article, poster, shade, playButton, frame: null, player: null });
+    slides.push({ element: article, poster, shade, playButton, work, frame: null, player: null, fallback: null, fallbackTimer: 0 });
   });
+
+  const anchorElement = document.createElement('article');
+  anchorElement.className = 'slide slide-anchor';
+  anchorElement.setAttribute('role', 'img');
+  anchorElement.setAttribute('aria-label', 'Xavier + Sandwich');
+  const anchorImage = document.createElement('img');
+  anchorImage.className = 'slide-poster';
+  anchorImage.src = 'xaviersandwich.jpg.png';
+  anchorImage.alt = 'Xavier + Sandwich';
+  anchorImage.loading = 'eager';
+  anchorImage.decoding = 'async';
+  anchorImage.draggable = false;
+  anchorImage.style.setProperty('--idle-duration', '12s');
+  anchorElement.append(anchorImage);
+  rail.append(anchorElement);
+  anchorSlide = { element: anchorElement };
 
   window.addEventListener('wheel', onWheel, { passive: false });
   window.addEventListener('message', onTikTokMessage);
