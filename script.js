@@ -9,8 +9,12 @@
   const badge = document.querySelector('#work-badge');
   const counter = document.querySelector('#counter');
   const empty = document.querySelector('#empty');
+  const playbackOverlay = document.querySelector('#playback-overlay');
+  const playbackSurface = document.querySelector('#playback-surface');
+  const playbackClose = playbackOverlay?.querySelector('.playback-close');
   const slides = [];
   let anchorSlide;
+  let activePlayback = null;
   let position = 0;
   let selected = 0;
   let velocity = 0;
@@ -80,6 +84,7 @@
   }
 
   function stopPlayback() {
+    if (activePlayback) closePlayback();
     let hadPlayback = false;
     slides.forEach(slide => {
       if (slide.frame || slide.player) hadPlayback = true;
@@ -104,6 +109,40 @@
     if (hadPlayback) window.IAD_BGM?.videoStopped();
   }
 
+  function closePlayback() {
+    const slide = activePlayback;
+    if (!slide) return;
+    activePlayback = null;
+    const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
+    if (fullscreenElement === playbackOverlay) {
+      const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen;
+      try {
+        const result = exitFullscreen?.call(document);
+        result?.catch?.(() => {});
+      } catch { /* Keep the fixed viewport overlay as the fallback. */ }
+    }
+    clearTimeout(slide.fallbackTimer);
+    slide.fallbackTimer = 0;
+    slide.element.classList.remove('is-playing', 'is-loading', 'is-paused');
+    slide.playButton.disabled = false;
+    slide.playButton.setAttribute('aria-label', `播放 ${slide.work.title || slide.work.category}`);
+    slide.playButton.setAttribute('aria-pressed', 'false');
+    if (slide.player) {
+      try { slide.player.destroy(); } catch { /* The provider frame may already be closing. */ }
+      slide.player = null;
+    }
+    if (slide.frame) {
+      slide.frame.src = 'about:blank';
+      slide.frame.remove();
+      slide.frame = null;
+    }
+    playbackOverlay.hidden = true;
+    playbackOverlay.setAttribute('aria-hidden', 'true');
+    playbackOverlay.classList.remove('is-portrait', 'is-fallback');
+    document.body.classList.remove('is-video-open');
+    window.IAD_BGM?.videoStopped();
+  }
+
   function videoId(work) {
     try {
       const url = new URL(work.videoSource);
@@ -116,10 +155,10 @@
     const id = videoId(work);
     if (!id) return '';
     if (work.videoType === 'tiktok') {
-      return `https://www.tiktok.com/player/v1/${encodeURIComponent(id)}?autoplay=1&muted=1&controls=0&music_info=0&description=0&playsinline=1`;
+      return `https://www.tiktok.com/player/v1/${encodeURIComponent(id)}?autoplay=1&muted=1&controls=1&music_info=0&description=0&playsinline=1`;
     }
     const origin = location.origin && location.origin !== 'null' ? `&origin=${encodeURIComponent(location.origin)}` : '';
-    return `https://www.youtube.com/embed/${encodeURIComponent(id)}?autoplay=1&mute=1&playsinline=1&controls=0&rel=0&enablejsapi=1${origin}`;
+    return `https://www.youtube.com/embed/${encodeURIComponent(id)}?autoplay=1&mute=1&playsinline=1&controls=1&rel=0&enablejsapi=1${origin}`;
   }
 
   function loadYouTubeApi() {
@@ -157,6 +196,7 @@
   }
 
   function markVideoPaused(slide) {
+    if (activePlayback !== slide) return;
     const wasPaused = slide.element.classList.contains('is-paused');
     slide.element.classList.remove('is-playing', 'is-loading');
     slide.element.classList.add('is-paused');
@@ -167,20 +207,24 @@
   }
 
   function restorePoster(slide, fallback = false) {
-    clearTimeout(slide.fallbackTimer);
-    slide.fallbackTimer = 0;
-    slide.element.classList.remove('is-playing', 'is-loading', 'is-paused');
-    slide.playButton.disabled = false;
-    slide.playButton.setAttribute('aria-label', `播放 ${slide.work.title || slide.work.category}`);
-    slide.playButton.setAttribute('aria-pressed', 'false');
-    if (slide.player) {
-      try { slide.player.destroy(); } catch { /* The frame may already be navigating away. */ }
-      slide.player = null;
-    }
-    if (slide.frame) {
-      slide.frame.src = 'about:blank';
-      slide.frame.remove();
-      slide.frame = null;
+    if (activePlayback === slide) closePlayback();
+    else {
+      clearTimeout(slide.fallbackTimer);
+      slide.fallbackTimer = 0;
+      slide.element.classList.remove('is-playing', 'is-loading', 'is-paused');
+      slide.playButton.disabled = false;
+      slide.playButton.setAttribute('aria-label', `播放 ${slide.work.title || slide.work.category}`);
+      slide.playButton.setAttribute('aria-pressed', 'false');
+      if (slide.player) {
+        try { slide.player.destroy(); } catch { /* The provider frame may already be closing. */ }
+        slide.player = null;
+      }
+      if (slide.frame) {
+        slide.frame.src = 'about:blank';
+        slide.frame.remove();
+        slide.frame = null;
+      }
+      window.IAD_BGM?.videoStopped();
     }
     if (fallback && slide.work.videoType === 'tiktok') {
       const link = document.createElement('a');
@@ -192,7 +236,6 @@
       slide.element.append(link);
       slide.fallback = link;
     }
-    window.IAD_BGM?.videoStopped();
   }
 
   function onTikTokMessage(event) {
@@ -237,6 +280,24 @@
     if (!src) return;
 
     window.IAD_BGM?.videoStarted();
+    activePlayback = slide;
+    playbackOverlay.classList.toggle('is-portrait', work.aspectRatio.startsWith('9'));
+    playbackOverlay.classList.remove('is-fallback');
+    playbackOverlay.hidden = false;
+    playbackOverlay.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('is-video-open');
+    const requestFullscreen = playbackOverlay.requestFullscreen || playbackOverlay.webkitRequestFullscreen;
+    if (requestFullscreen) {
+      try {
+        const result = requestFullscreen.call(playbackOverlay);
+        result?.catch?.(() => playbackOverlay.classList.add('is-fallback'));
+      } catch {
+        playbackOverlay.classList.add('is-fallback');
+      }
+    } else {
+      playbackOverlay.classList.add('is-fallback');
+    }
+    playbackClose?.focus({ preventScroll: true });
     slide.fallback?.remove();
     slide.fallback = null;
     slide.playButton.disabled = true;
@@ -250,7 +311,7 @@
     frame.addEventListener('error', () => restorePoster(slide, true));
     slide.frame = frame;
     frame.src = src;
-    slide.element.append(frame);
+    playbackSurface.replaceChildren(frame);
     if (work.videoType === 'tiktok') {
       slide.fallbackTimer = setTimeout(() => {
         if (slide.frame === frame && !slide.element.classList.contains('is-playing')) restorePoster(slide, true);
@@ -387,6 +448,7 @@
   }
 
   function onWheel(event) {
+    if (activePlayback) return;
     if (innerWidth <= 700 || !Number.isFinite(event.deltaY) || event.deltaY === 0) return;
     event.preventDefault();
     const modeFactor = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? innerHeight : 1;
@@ -519,6 +581,18 @@
 
   window.addEventListener('wheel', onWheel, { passive: false });
   window.addEventListener('message', onTikTokMessage);
+  playbackClose?.addEventListener('click', closePlayback);
+  window.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && activePlayback) {
+      event.preventDefault();
+      closePlayback();
+    }
+  }, true);
+  const syncFullscreenExit = () => {
+    if (activePlayback && document.fullscreenElement !== playbackOverlay && document.webkitFullscreenElement !== playbackOverlay) closePlayback();
+  };
+  document.addEventListener('fullscreenchange', syncFullscreenExit);
+  document.addEventListener('webkitfullscreenchange', syncFullscreenExit);
   stage.addEventListener('pointerdown', onPointerDown);
   window.addEventListener('pointerup', onPointerUp, { capture: true });
   window.addEventListener('pointercancel', () => { touchStart = null; }, { capture: true });
