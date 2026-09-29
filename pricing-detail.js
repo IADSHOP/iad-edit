@@ -64,24 +64,29 @@
   const tiers = [...main.querySelectorAll('.detail-tier')];
   const cta = main.querySelector('[data-order-cta]');
   const status = main.querySelector('.detail-cta-status');
+  function selectTier(tier, button) {
+    tiers.forEach(other => {
+      other.classList.toggle('is-selected', other === tier);
+      other.querySelector('[data-select-tier]')?.setAttribute('aria-pressed', String(other === tier));
+    });
+    if (!cta) return;
+    cta.dataset.service = main.dataset.service;
+    cta.dataset.tier = tier.dataset.tier;
+    cta.dataset.price = tier.dataset.price;
+    if (tier.dataset.priceFrom === 'true') cta.dataset.priceFrom = 'true';
+    else delete cta.dataset.priceFrom;
+    cta.dataset.isQuoteBased = String(tier.dataset.isQuoteBased === 'true');
+    const label = `${tier.dataset.tier.toUpperCase()}｜${button.textContent.trim()}`;
+    cta.setAttribute('aria-label', `馬上製作，已選擇 ${label}`);
+    if (status) status.textContent = `已選擇 ${label}。`;
+  }
   tiers.forEach(tier => {
     const button = tier.querySelector('[data-select-tier]');
     if (!button) return;
-    button.addEventListener('click', () => {
-      tiers.forEach(other => {
-        other.classList.toggle('is-selected', other === tier);
-        other.querySelector('[data-select-tier]')?.setAttribute('aria-pressed', String(other === tier));
-      });
-      if (!cta) return;
-      cta.dataset.service = main.dataset.service;
-      cta.dataset.tier = tier.dataset.tier;
-      cta.dataset.price = tier.dataset.price;
-      if (tier.dataset.priceFrom === 'true') cta.dataset.priceFrom = 'true';
-      else delete cta.dataset.priceFrom;
-      cta.dataset.isQuoteBased = String(tier.dataset.isQuoteBased === 'true');
-      const label = `${tier.dataset.tier.toUpperCase()}｜${button.textContent.trim()}`;
-      cta.setAttribute('aria-label', `馬上製作，已選擇 ${label}`);
-      if (status) status.textContent = `已選擇 ${label}。`;
+    button.addEventListener('click', () => selectTier(tier, button));
+    tier.addEventListener('click', event => {
+      if (event.target.closest('.info-trigger, .detail-tooltip, button, a, input')) return;
+      button.click();
     });
   });
 

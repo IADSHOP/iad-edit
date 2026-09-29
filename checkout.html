@@ -8,8 +8,8 @@
   <title>Checkout — OFFCUT STUDIO</title>
   <link rel="icon" type="image/png" href="./favicon.png.png">
   <link rel="apple-touch-icon" href="./favicon.png.png">
-  <link rel="stylesheet" href="style.css?v=offcut-checkout-2">
-  <script src="checkout.js?v=offcut-checkout-2" defer></script>
+  <link rel="stylesheet" href="style.css?v=offcut-payment-flow-1">
+  <script src="checkout.js?v=offcut-payment-flow-1" defer></script>
 </head>
 <body class="checkout-page">
   <header class="topbar" aria-label="網站標題">
@@ -78,7 +78,7 @@
           <div class="summary-spec"><dt>成片長度</dt><dd data-summary-output>1–5 分鐘</dd></div>
           <div class="summary-total"><dt>價格</dt><dd data-summary-price>NT$899</dd></div>
         </dl>
-        <p class="quote-note" data-quote-note hidden>此方案為報價制；此處金額僅供辨識方案，不代表固定成交價格。</p>
+        <p class="quote-note" data-quote-note hidden>此方案為起價方案，實際價格需依需求確認。</p>
         <a class="checkout-back-link" data-detail-back href="pricing.html">← 返回方案</a>
       </section>
       <section class="checkout-actions" aria-label="條款同意與付款">
@@ -87,9 +87,16 @@
           <label class="agreement-row"><input type="checkbox" data-agreement><span><strong>我已閱讀並同意服務條款及退款規則</strong><small>I HAVE READ AND AGREE TO THE TERMS</small></span></label>
           <label class="agreement-row"><input type="checkbox" data-agreement><span><strong>我已確認所購方案內容及素材限制</strong></span></label>
         </fieldset>
-        <section class="payment-placeholder" aria-labelledby="payment-heading"><p class="checkout-eyebrow">PAYMENT</p><h2 id="payment-heading">付款方式</h2></section>
-        <button class="checkout-continue" type="button" data-continue disabled>完成付款・提交素材 <span aria-hidden="true">→</span></button>
-        <p class="checkout-status" aria-live="polite">請先閱讀並勾選確認事項</p>
+        <fieldset class="payment-methods">
+          <legend><span class="checkout-eyebrow">PAYMENT METHOD</span><span>付款方式</span></legend>
+          <div class="payment-options">
+            <label class="payment-option"><input type="radio" name="paymentMethod" value="bank" data-payment-method><span>匯款</span></label>
+            <label class="payment-option"><input type="radio" name="paymentMethod" value="linepay" data-payment-method><span>LINE PAY</span></label>
+            <label class="payment-option"><input type="radio" name="paymentMethod" value="card" data-payment-method><span>信用卡</span></label>
+          </div>
+        </fieldset>
+        <button class="checkout-continue" type="button" data-continue disabled>繼續付款 <span aria-hidden="true">→</span></button>
+        <p class="checkout-status" aria-live="polite">請完成條款確認並選擇付款方式</p>
       </section>
     </div>
   </main>

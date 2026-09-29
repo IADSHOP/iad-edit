@@ -59,7 +59,7 @@
   const tierInfo = serviceInfo.tiers[tier];
   const requestedPrice = params.get('price');
   const price = requestedPrice && /^\d{1,8}$/.test(requestedPrice) ? Number(requestedPrice) : tierInfo.price;
-  const isQuoteBased = params.get('isQuoteBased') === 'true' || Boolean(tierInfo.isQuoteBased);
+  const isQuoteBased = params.get('isQuoteBased') === 'true' || params.get('quote') === 'true' || Boolean(tierInfo.isQuoteBased);
   const state = Object.freeze({ service, tier, price, isQuoteBased, customerName: null, email: null, lineId: null, orderId: null });
   window.OFFCUT_CHECKOUT = state;
 
@@ -76,13 +76,34 @@
   back.href = serviceInfo.path;
 
   const agreements = [...page.querySelectorAll('[data-agreement]')];
+  const paymentOptions = [...page.querySelectorAll('[data-payment-method]')];
   const continueButton = page.querySelector('[data-continue]');
   const status = page.querySelector('.checkout-status');
-  const payment = { integrated: false, confirmed: false };
-  const syncAgreements = () => {
-    const complete = agreements.every(input => input.checked);
-    continueButton.disabled = !complete || !payment.integrated || !payment.confirmed;
-    status.textContent = !complete ? '請先閱讀並勾選確認事項' : '付款方式尚未開放';
+  const paymentRoutes = {
+    bank: 'payment-bank.html',
+    linepay: 'payment-linepay.html',
+    card: 'payment-card.html'
   };
-  agreements.forEach(input => input.addEventListener('change', syncAgreements));
+  let termsAccepted = false;
+  let planConfirmed = false;
+  let paymentMethod = null;
+
+  const syncCheckout = () => {
+    termsAccepted = agreements[0]?.checked === true;
+    planConfirmed = agreements[1]?.checked === true;
+    paymentMethod = paymentOptions.find(input => input.checked)?.value || null;
+    const complete = termsAccepted && planConfirmed && paymentMethod !== null;
+    continueButton.disabled = !complete;
+    status.textContent = complete ? '' : '請完成條款確認並選擇付款方式';
+  };
+
+  agreements.forEach(input => input.addEventListener('change', syncCheckout));
+  paymentOptions.forEach(input => input.addEventListener('change', syncCheckout));
+
+  continueButton.addEventListener('click', () => {
+    if (continueButton.disabled || !paymentMethod || !paymentRoutes[paymentMethod]) return;
+    const query = new URLSearchParams({ service, tier, price: String(price) });
+    if (isQuoteBased) query.set('isQuoteBased', 'true');
+    window.location.href = `${paymentRoutes[paymentMethod]}?${query.toString()}`;
+  });
 })();
