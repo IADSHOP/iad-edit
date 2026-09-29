@@ -78,6 +78,7 @@
       cta.dataset.price = tier.dataset.price;
       if (tier.dataset.priceFrom === 'true') cta.dataset.priceFrom = 'true';
       else delete cta.dataset.priceFrom;
+      cta.dataset.isQuoteBased = String(tier.dataset.isQuoteBased === 'true');
       const label = `${tier.dataset.tier.toUpperCase()}｜${button.textContent.trim()}`;
       cta.setAttribute('aria-label', `馬上製作，已選擇 ${label}`);
       if (status) status.textContent = `已選擇 ${label}。`;
@@ -91,10 +92,12 @@
       main.querySelector('.detail-tiers')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-    const tier = cta.dataset.tier.toUpperCase();
-    const price = cta.dataset.price;
-    const currency = main.dataset.currency || 'NT$';
-    const priceText = cta.dataset.priceFrom === 'true' ? `${currency}${Number(price).toLocaleString('en-US')} 起` : `${currency}${Number(price).toLocaleString('en-US')}`;
-    if (status) status.textContent = `已選擇 ${tier}｜${priceText}；訂購流程將於下一階段開放。`;
+    const query = new URLSearchParams({
+      service: cta.dataset.service,
+      tier: cta.dataset.tier,
+      price: cta.dataset.price
+    });
+    if (cta.dataset.isQuoteBased === 'true') query.set('isQuoteBased', 'true');
+    window.location.href = `checkout.html?${query.toString()}`;
   });
 })();
