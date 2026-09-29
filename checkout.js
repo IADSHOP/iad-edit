@@ -78,15 +78,11 @@
   const agreements = [...page.querySelectorAll('[data-agreement]')];
   const continueButton = page.querySelector('[data-continue]');
   const status = page.querySelector('.checkout-status');
+  const payment = { integrated: false, confirmed: false };
   const syncAgreements = () => {
     const complete = agreements.every(input => input.checked);
-    continueButton.disabled = !complete;
-    status.textContent = complete ? '確認事項已勾選。此原型不會建立訂單或進行付款。' : '請先閱讀並勾選確認事項';
+    continueButton.disabled = !complete || !payment.integrated || !payment.confirmed;
+    status.textContent = !complete ? '請先閱讀並勾選確認事項' : '付款方式尚未開放';
   };
   agreements.forEach(input => input.addEventListener('change', syncAgreements));
-
-  continueButton.addEventListener('click', () => {
-    if (!agreements.every(input => input.checked)) return;
-    status.textContent = '訂購流程原型尚未接入付款，未建立訂單，也未進行扣款。';
-  });
 })();

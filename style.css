@@ -175,14 +175,20 @@ main { position: relative; width: 100%; height: 100svh; min-height: 550px; }
 .detail-applies p { margin: 7px 0 0; color: #555550; font-size: 13px; line-height: 1.8; }
 .detail-tiers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 54px; margin-top: 54px; }
 .detail-tiers--two { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 920px; margin-right: auto; margin-left: auto; }
-.detail-tier { min-width: 0; padding: 27px 0 30px; border-top: 1px solid rgba(37,37,35,.22); }
+.detail-tier { min-width: 0; padding: 27px 0 30px; border-top: 1px solid rgba(37,37,35,.22); background-color: transparent; transition: background-color 220ms ease; }
+.detail-tier.is-selected { background-color: rgba(138,102,82,.055); }
+@media (hover: hover) and (pointer: fine) {
+  .detail-tier:not(.is-selected):hover { background-color: rgba(0,0,0,.025); }
+}
 .tier-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .tier-code { margin: 0 0 3px; color: #8a6652; font-size: 10px; }
+.detail-tier.is-selected .tier-code { color: #a55547; }
 .tier-heading h2 { margin: 0; font-size: 18px; font-weight: 500; letter-spacing: .02em; }
 .tier-price { flex: 0 0 auto; min-width: 112px; min-height: 39px; padding: 0 17px; border: 0; border-radius: 999px; background: #c94e42; color: #fffaf6; font: 500 13px/1 Manrope, Arial, sans-serif; letter-spacing: .015em; cursor: pointer; transition: background-color 160ms ease, transform 160ms ease; }
 .tier-price:hover { background: #b94338; }
 .tier-price:active { transform: scale(.98); }
-.tier-price[aria-pressed="true"] { background: #8e382f; outline: 1px solid rgba(255,250,246,.72); outline-offset: 2px; }
+.tier-price[aria-pressed="true"] { background: #b94338; }
+.tier-price[aria-pressed="true"]::before { content: "✓"; margin-right: 6px; }
 .tier-price:focus-visible, .info-trigger:focus-visible, .detail-cta:focus-visible { outline: 1px solid currentColor; outline-offset: 4px; }
 .tier-includes, .tier-fit { margin: 14px 0 0; color: #65645f; font-size: 11px; line-height: 1.7; }
 .tier-includes { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .035em; }

@@ -4,10 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#E8E8E5">
-  <meta name="description" content="OFFCUT STUDIO 影音製作訂單確認原型。">
+  <meta name="description" content="OFFCUT STUDIO 影音製作訂單確認。">
   <title>Checkout — OFFCUT STUDIO</title>
-  <link rel="stylesheet" href="style.css?v=offcut-checkout-1">
-  <script src="checkout.js?v=offcut-checkout-1" defer></script>
+  <link rel="icon" type="image/png" href="./favicon.png.png">
+  <link rel="apple-touch-icon" href="./favicon.png.png">
+  <link rel="stylesheet" href="style.css?v=offcut-checkout-2">
+  <script src="checkout.js?v=offcut-checkout-2" defer></script>
 </head>
 <body class="checkout-page">
   <header class="topbar" aria-label="網站標題">
@@ -17,10 +19,9 @@
   <main class="checkout-main" data-checkout>
     <a class="checkout-back" data-checkout-back href="pricing.html">← 返回方案</a>
     <div class="checkout-grid">
-      <section class="terms-column" aria-labelledby="terms-heading">
+      <section class="terms-column" aria-label="服務條款">
         <div class="terms-heading-row">
-          <div><p class="checkout-eyebrow">TERMS & CONDITIONS</p><h1 id="terms-heading">製作條款</h1></div>
-          <span class="terms-version">會議討論版 V2</span>
+          <div><p class="checkout-eyebrow">TERMS & CONDITIONS</p></div>
         </div>
         <div class="terms-panel" role="region" aria-label="OFFCUT STUDIO 影音製作服務條款，可在此區域捲動閱讀" tabindex="0">
           <article class="terms-copy">
@@ -67,7 +68,6 @@
           </article>
           <span class="terms-scroll-hint" aria-hidden="true">SCROLL TO READ ↓</span>
         </div>
-        <p class="terms-draft-note">本頁目前為訂購流程原型；條款文字為會議討論版 V2，正式啟用前需確認。</p>
       </section>
       <section class="checkout-summary" aria-labelledby="order-heading">
         <p class="checkout-eyebrow">YOUR ORDER</p><h1 id="order-heading">訂購摘要</h1>
@@ -87,10 +87,9 @@
           <label class="agreement-row"><input type="checkbox" data-agreement><span><strong>我已閱讀並同意服務條款及退款規則</strong><small>I HAVE READ AND AGREE TO THE TERMS</small></span></label>
           <label class="agreement-row"><input type="checkbox" data-agreement><span><strong>我已確認所購方案內容及素材限制</strong></span></label>
         </fieldset>
-        <section class="payment-placeholder" aria-labelledby="payment-heading"><p class="checkout-eyebrow">PAYMENT</p><h2 id="payment-heading">付款方式</h2><p class="payment-coming-soon">Coming Soon</p><p class="payment-note">付款資訊尚待設定。本頁不會建立訂單或進行付款。</p></section>
-        <button class="checkout-continue" type="button" data-continue disabled>CONTINUE <span aria-hidden="true">→</span></button>
+        <section class="payment-placeholder" aria-labelledby="payment-heading"><p class="checkout-eyebrow">PAYMENT</p><h2 id="payment-heading">付款方式</h2></section>
+        <button class="checkout-continue" type="button" data-continue disabled>完成付款・提交素材 <span aria-hidden="true">→</span></button>
         <p class="checkout-status" aria-live="polite">請先閱讀並勾選確認事項</p>
-        <p class="checkout-prototype-note">CHECKOUT PROTOTYPE · NO PAYMENT WILL BE TAKEN</p>
       </section>
     </div>
   </main>
