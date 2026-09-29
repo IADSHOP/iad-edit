@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#E8E8E5">
+  <meta name="description" content="查詢 OFFCUT STUDIO 訂單進度。">
+  <title>訂單查詢 — OFFCUT STUDIO</title>
+  <link rel="icon" type="image/png" href="./favicon.png.png">
+  <link rel="apple-touch-icon" href="./favicon.png.png">
+  <link rel="stylesheet" href="style.css?v=offcut-order-flow-1">
+  <script src="order-storage.js?v=offcut-order-flow-1" defer></script>
+  <script src="order-model.js?v=offcut-order-flow-1" defer></script>
+  <script src="order-lookup.js?v=offcut-order-flow-1" defer></script>
+</head>
+<body class="flow-page">
+  <header class="topbar" aria-label="網站標題"><a class="wordmark" href="index.html" aria-label="OFFCUT STUDIO 首頁"><img src="OFFCUTSTUDIO-transparent.png" alt="OFFCUT STUDIO"></a><span class="edition">VIDEO EDITING&nbsp; / &nbsp;2017</span></header>
+  <main class="flow-main flow-main--narrow" data-order-lookup>
+    <a class="flow-back" href="index.html">← OFFCUT STUDIO</a>
+    <header class="flow-heading"><p class="checkout-eyebrow">ORDER LOOKUP</p><h1>訂單查詢</h1><p>請輸入訂單編號與付款回報時使用的 Email。</p></header>
+    <form class="lookup-form" data-lookup-form>
+      <label>訂單編號<input name="orderId" placeholder="OFF-260930-A7K3" autocomplete="off" required maxlength="18"></label>
+      <label>Email<input name="email" type="email" placeholder="customer@email.com" autocomplete="email" required maxlength="254"></label>
+      <button class="flow-primary" type="submit">查詢訂單 →</button>
+      <p class="flow-error" data-lookup-error aria-live="polite" hidden></p>
+    </form>
+    <p class="flow-prototype-note">此原型只能查詢同一瀏覽器與裝置中建立並回報的訂單。正式跨裝置查詢需要安全的後端資料庫。</p>
+    <a class="flow-contact-link" href="contact.html">付款或訂單問題：聯繫 OFFCUT</a>
+  </main>
+</body>
+</html>

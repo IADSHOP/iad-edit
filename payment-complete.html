@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#E8E8E5">
+  <meta name="description" content="OFFCUT STUDIO 付款回報。">
+  <title>付款回報 — OFFCUT STUDIO</title>
+  <link rel="icon" type="image/png" href="./favicon.png.png">
+  <link rel="apple-touch-icon" href="./favicon.png.png">
+  <link rel="stylesheet" href="style.css?v=offcut-order-flow-1">
+  <script src="order-storage.js?v=offcut-order-flow-1" defer></script>
+  <script src="order-model.js?v=offcut-order-flow-1" defer></script>
+  <script src="email-adapter.js?v=offcut-order-flow-1" defer></script>
+  <script src="payment-complete.js?v=offcut-order-flow-1" defer></script>
+</head>
+<body class="flow-page">
+  <header class="topbar" aria-label="網站標題"><a class="wordmark" href="index.html" aria-label="OFFCUT STUDIO 首頁"><img src="OFFCUTSTUDIO-transparent.png" alt="OFFCUT STUDIO"></a><span class="edition">VIDEO EDITING&nbsp; / &nbsp;2017</span></header>
+  <main class="flow-main" data-payment-complete>
+    <a class="flow-back" href="index.html">← OFFCUT STUDIO</a>
+    <header class="flow-heading"><p class="checkout-eyebrow">PAYMENT REPORT</p><h1>付款回報</h1><p>付款回報不代表網站已驗證收到款項；OFFCUT 確認前，訂單狀態會保持等待確認。</p></header>
+    <section class="flow-order-strip" data-flow-order-summary>
+      <div><span>ORDER ID</span><strong data-order-id>—</strong><button class="copy-quiet" type="button" data-copy-order>複製</button><small data-order-copy-feedback aria-live="polite"></small></div>
+      <dl><div><dt>服務</dt><dd data-order-service>—</dd></div><div><dt>方案</dt><dd data-order-tier>—</dd></div><div><dt>金額</dt><dd data-order-price>—</dd></div><div><dt>付款方式</dt><dd data-order-method>—</dd></div></dl>
+    </section>
+    <p class="flow-error" data-flow-error hidden></p>
+    <form class="report-form" data-report-form novalidate>
+      <h2>付款辨識資訊</h2>
+      <label>姓名／稱呼<input name="customerName" autocomplete="name" required maxlength="80"></label>
+      <label>Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label>
+      <label>LINE 名稱或 LINE ID<input name="lineId" autocomplete="off" required maxlength="100"></label>
+      <label>付款方式<output data-report-method>—</output></label>
+      <label data-bank-last-five-row hidden>匯款帳號後五碼<input name="paymentLastFive" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" autocomplete="off"></label>
+      <label data-payment-time-row hidden>付款時間（選填）<input name="paymentTime" type="datetime-local"></label>
+      <label data-payment-reference-row hidden>付款備註／可辨識資訊（選填）<textarea name="paymentReference" rows="3" maxlength="500"></textarea></label>
+      <label class="file-report" data-payment-screenshot-row hidden>付款截圖（選填）<input name="paymentScreenshot" type="file" accept="image/*"><small>待後端串接。此原型不會上傳或保存所選圖片。</small></label>
+      <p class="flow-error" data-form-error hidden></p>
+      <button class="flow-primary" type="submit">提交付款回報 →</button>
+    </form>
+    <section class="report-success" data-report-success hidden>
+      <p class="checkout-eyebrow">PAYMENT REVIEW</p>
+      <h2>付款資料已送出</h2>
+      <p>狀態：等待 OFFCUT 確認付款</p>
+      <div class="success-order-id"><span>請保存您的訂單編號</span><strong data-success-order-id>—</strong><button class="copy-quiet" type="button" data-copy-success-order>複製</button><small data-success-copy-feedback aria-live="polite"></small></div>
+      <p>日後可從 OFFCUT STUDIO 首頁「訂單資訊」查詢進度。</p>
+      <a class="flow-text-link" href="order-lookup.html">前往訂單資訊 →</a>
+      <a class="flow-contact-link" href="contact.html">LINE 官方聯繫／付款問題</a>
+    </section>
+    <p class="flow-prototype-note">此訂單原型僅儲存在建立訂單的同一瀏覽器與裝置。</p>
+  </main>
+</body>
+</html>

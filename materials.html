@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#E8E8E5">
+  <meta name="description" content="OFFCUT STUDIO 素材提交入口。">
+  <title>提交素材 — OFFCUT STUDIO</title>
+  <link rel="icon" type="image/png" href="./favicon.png.png">
+  <link rel="apple-touch-icon" href="./favicon.png.png">
+  <link rel="stylesheet" href="style.css?v=offcut-order-flow-1">
+  <script src="order-storage.js?v=offcut-order-flow-1" defer></script>
+  <script src="order-model.js?v=offcut-order-flow-1" defer></script>
+  <script src="upload-adapter.js?v=offcut-order-flow-1" defer></script>
+  <script src="materials.js?v=offcut-order-flow-1" defer></script>
+</head>
+<body class="flow-page">
+  <header class="topbar" aria-label="網站標題"><a class="wordmark" href="index.html" aria-label="OFFCUT STUDIO 首頁"><img src="OFFCUTSTUDIO-transparent.png" alt="OFFCUT STUDIO"></a><span class="edition">VIDEO EDITING&nbsp; / &nbsp;2017</span></header>
+  <main class="flow-main" data-materials-page>
+    <a class="flow-back" data-materials-back href="order-lookup.html">← 訂單資訊</a>
+    <header class="flow-heading"><p class="checkout-eyebrow">MATERIAL SUBMISSION</p><h1>提交素材</h1><p>請依訂單編號整理本次製作素材。</p></header>
+    <p class="flow-error" data-materials-error hidden></p>
+    <section class="materials-panel" data-materials-panel hidden>
+      <div class="materials-order-id"><span>ORDER ID</span><strong data-order-id>—</strong><button class="copy-quiet" type="button" data-copy-order>複製訂單編號</button><small data-order-copy-feedback aria-live="polite"></small></div>
+      <dl class="order-detail-grid"><div><dt>服務</dt><dd data-order-service>—</dd></div><div><dt>方案</dt><dd data-order-tier>—</dd></div></dl>
+      <p>請依訂單編號整理素材，建議資料夾命名：</p>
+      <p class="folder-example"><strong data-folder-example>OFF-260930-A7K3_姓名</strong></p>
+      <div class="upload-placeholder"><span>UPLOAD MATERIALS</span><p data-upload-message>上傳服務將於下一階段串接。此頁不會把影片上傳到 GitHub。</p><button type="button" class="flow-primary" data-upload-button disabled>上傳素材 →</button></div>
+      <p class="flow-prototype-note">目前 uploadProvider / uploadUrl 尚未設定；尚未完成付款確認的訂單不會開放素材上傳。</p>
+    </section>
+    <a class="flow-contact-link" href="contact.html">LINE 官方聯繫／素材問題</a>
+  </main>
+</body>
+</html>

@@ -1,36 +1,124 @@
 (() => {
   const page = document.querySelector('[data-payment-page]');
-  if (!page) return;
+  const model = window.OFFCUT_ORDER_MODEL;
+  if (!page || !model) return;
 
-  const catalog = {
-    'mini-vlog': { label: 'MINI VLOG', tiers: { trial: ['TRIAL｜限時體驗價', 499], basic: ['BASIC｜基礎版', 899], plus: ['PLUS｜加強版', 1680], pro: ['PRO｜專業版', 2880] } },
-    gaming: { label: '遊戲實況精華', tiers: { basic: ['BASIC｜基礎版', 1680], plus: ['PLUS｜加強版', 2880], pro: ['PRO｜專業版', 4980] } },
-    youtube: { label: 'YOUTUBE 影片', tiers: { basic: ['BASIC｜基礎版', 1880], plus: ['PLUS｜加強版', 2980], pro: ['PRO｜專業版', 4980] } },
-    brand: { label: '品牌形象', tiers: { basic: ['BASIC｜基礎版', 1980], plus: ['PLUS｜加強版', 2980], pro: ['PRO｜專業版', 4980, true] } },
-    program: { label: '節目製作', tiers: { edit: ['EDIT｜節目剪輯', 4980, true], production: ['PRODUCTION｜完整節目製作', 10000, true] } }
+  const serviceLabels = {
+    'mini-vlog': 'MINI VLOG', gaming: '遊戲實況精華', youtube: 'YOUTUBE 影片', brand: '品牌形象', program: '節目製作'
+  };
+  const tierLabels = {
+    trial: 'TRIAL｜限時體驗價', basic: 'BASIC｜基礎版', plus: 'PLUS｜加強版', pro: 'PRO｜專業版',
+    edit: 'EDIT｜節目剪輯', production: 'PRODUCTION｜完整節目製作'
+  };
+  const paymentLabels = { bank: '匯款', linepay: 'LINE PAY', card: '信用卡' };
+  const params = new URLSearchParams(window.location.search);
+  const orderId = params.get('orderId') || '';
+  const order = model.get(orderId);
+  const expectedMethod = page.dataset.method;
+  const copyFeedback = (selector, feedbackSelector, text, value) => {
+    const button = page.querySelector(selector);
+    if (!button) return;
+    button.addEventListener('click', async () => {
+      const feedback = page.querySelector(feedbackSelector);
+      let copied = false;
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(String(value));
+          copied = true;
+        }
+      } catch (_) { /* use the local fallback below */ }
+      if (!copied) {
+        const field = document.createElement('textarea');
+        field.value = String(value);
+        field.setAttribute('readonly', '');
+        field.style.position = 'fixed';
+        field.style.opacity = '0';
+        document.body.append(field);
+        field.select();
+        copied = document.execCommand('copy');
+        field.remove();
+      }
+      if (feedback) {
+        feedback.textContent = copied ? '已複製' : '複製失敗';
+        window.setTimeout(() => { feedback.textContent = ''; }, 1600);
+      }
+      if (copied) button.setAttribute('aria-label', `${text}已複製`);
+    });
   };
 
-  const params = new URLSearchParams(window.location.search);
-  const requestedService = params.get('service');
-  const service = Object.prototype.hasOwnProperty.call(catalog, requestedService) ? requestedService : null;
-  const serviceInfo = service ? catalog[service] : null;
-  const requestedTier = (params.get('tier') || '').toLowerCase();
-  const tier = serviceInfo && Object.prototype.hasOwnProperty.call(serviceInfo.tiers, requestedTier) ? requestedTier : null;
-  const tierInfo = tier ? serviceInfo.tiers[tier] : null;
-  const requestedPrice = params.get('price');
-  const price = requestedPrice && /^\d{1,8}$/.test(requestedPrice) ? Number(requestedPrice) : tierInfo?.[1];
-  const isQuoteBased = params.get('isQuoteBased') === 'true' || params.get('quote') === 'true' || Boolean(tierInfo?.[2]);
-
-  page.querySelector('[data-payment-service]').textContent = serviceInfo?.label || '—';
-  page.querySelector('[data-payment-tier]').textContent = tierInfo?.[0] || '—';
-  page.querySelector('[data-payment-price]').textContent = price ? `NT$${price.toLocaleString('en-US')}${isQuoteBased ? ' 起' : ''}` : '—';
-  page.querySelector('[data-quote-note]').hidden = !isQuoteBased;
-
-  const backParams = new URLSearchParams();
-  if (service) backParams.set('service', service);
-  if (tier) backParams.set('tier', tier);
-  if (price) backParams.set('price', String(price));
-  if (isQuoteBased) backParams.set('isQuoteBased', 'true');
   const back = page.querySelector('[data-payment-back]');
-  back.href = `checkout.html${backParams.size ? `?${backParams.toString()}` : ''}`;
+  if (order) back.href = model.withOrder('checkout.html', order);
+
+  const noOrder = page.querySelector('[data-order-local-note]');
+  const done = page.querySelector('[data-payment-done]');
+  const status = page.querySelector('[data-payment-status-note]');
+  if (!order) {
+    noOrder.textContent = '此裝置找不到這筆訂單的本機資料。請回到建立訂單時使用的瀏覽器與裝置。';
+    status.textContent = '訂單資料僅存在建立訂單的本機瀏覽器。';
+    done.disabled = true;
+    return;
+  }
+
+  const methodMatches = order.paymentMethod === expectedMethod;
+  page.querySelector('[data-payment-order-id]').textContent = order.orderId;
+  page.querySelector('[data-payment-service]').textContent = serviceLabels[order.service] || order.service;
+  page.querySelector('[data-payment-tier]').textContent = tierLabels[order.tier] || order.tier;
+  page.querySelector('[data-payment-price]').textContent = `NT$${Number(order.price).toLocaleString('en-US')}${order.pricingMode === 'quote' ? ' 起' : ''}`;
+  page.querySelector('[data-quote-note]').hidden = order.pricingMode !== 'quote';
+  const copyOrder = page.querySelector('[data-copy-order]');
+  const orderFeedback = page.querySelector('[data-copy-order-feedback]');
+  if (copyOrder) copyOrder.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(order.orderId);
+      orderFeedback.textContent = '已複製';
+      window.setTimeout(() => { orderFeedback.textContent = ''; }, 1600);
+    } catch (_) {
+      const field = document.createElement('textarea'); field.value = order.orderId; field.readOnly = true;
+      field.style.position = 'fixed'; field.style.opacity = '0'; document.body.append(field); field.select();
+      const copied = document.execCommand('copy'); field.remove();
+      orderFeedback.textContent = copied ? '已複製' : '複製失敗';
+      window.setTimeout(() => { orderFeedback.textContent = ''; }, 1600);
+    }
+  });
+
+  const amount = String(Number(order.price));
+  copyFeedback('[data-copy-amount]', '[data-copy-amount-feedback]', '付款金額', amount);
+  copyFeedback('[data-copy-account]', '[data-copy-account-feedback]', '銀行帳號', '19201800126419');
+
+  if (!methodMatches) {
+    status.textContent = `這筆訂單的付款方式為「${paymentLabels[order.paymentMethod] || order.paymentMethod}」，請回訂單確認頁更換付款方式。`;
+    done.disabled = true;
+    return;
+  }
+  if (order.paymentStatus === 'PAYMENT REVIEW') {
+    if (order.paymentReportSubmitted) {
+      status.textContent = '已收到您的付款回報，狀態為 PAYMENT REVIEW，等待 OFFCUT 確認付款。';
+    } else {
+      status.textContent = '請完成付款辨識資料，讓 OFFCUT 可以核對款項。';
+      const resume = page.querySelector('[data-resume-report]');
+      resume.href = model.withOrder('payment-complete.html', order);
+      resume.hidden = false;
+    }
+    done.disabled = true;
+    return;
+  }
+  if (order.paymentStatus !== 'PENDING PAYMENT') {
+    status.textContent = `目前付款狀態：${order.paymentStatus}`;
+    done.disabled = true;
+    return;
+  }
+
+  done.disabled = false;
+  done.addEventListener('click', () => {
+    const updated = model.update(order.orderId, {
+      paymentStatus: 'PAYMENT REVIEW',
+      paymentReportedAt: new Date().toISOString(),
+      paymentReportSubmitted: false
+    });
+    if (!updated) {
+      status.textContent = '訂單資料無法保存，請稍後再試。';
+      return;
+    }
+    window.location.href = model.withOrder('payment-complete.html', updated);
+  });
 })();

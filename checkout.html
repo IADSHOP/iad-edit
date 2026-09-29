@@ -8,8 +8,10 @@
   <title>Checkout — OFFCUT STUDIO</title>
   <link rel="icon" type="image/png" href="./favicon.png.png">
   <link rel="apple-touch-icon" href="./favicon.png.png">
-  <link rel="stylesheet" href="style.css?v=offcut-payment-flow-1">
-  <script src="checkout.js?v=offcut-payment-flow-1" defer></script>
+  <link rel="stylesheet" href="style.css?v=offcut-order-flow-1">
+  <script src="order-storage.js?v=offcut-order-flow-1" defer></script>
+  <script src="order-model.js?v=offcut-order-flow-1" defer></script>
+  <script src="checkout.js?v=offcut-order-flow-1" defer></script>
 </head>
 <body class="checkout-page">
   <header class="topbar" aria-label="網站標題">
@@ -95,6 +97,13 @@
             <label class="payment-option"><input type="radio" name="paymentMethod" value="card" data-payment-method><span>信用卡</span></label>
           </div>
         </fieldset>
+        <div class="checkout-order-id" data-checkout-order hidden>
+          <span>ORDER ID</span>
+          <strong data-checkout-order-id></strong>
+          <button type="button" class="copy-quiet" data-copy-order>複製</button>
+          <small>訂單會保存在此瀏覽器與裝置。</small>
+          <small data-checkout-order-copy-feedback aria-live="polite"></small>
+        </div>
         <button class="checkout-continue" type="button" data-continue disabled>繼續付款 <span aria-hidden="true">→</span></button>
         <p class="checkout-status" aria-live="polite">請完成條款確認並選擇付款方式</p>
       </section>
