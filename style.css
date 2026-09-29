@@ -182,7 +182,7 @@ main { position: relative; width: 100%; height: 100svh; min-height: 550px; }
 .tier-price { flex: 0 0 auto; min-width: 112px; min-height: 39px; padding: 0 17px; border: 0; border-radius: 999px; background: #c94e42; color: #fffaf6; font: 500 13px/1 Manrope, Arial, sans-serif; letter-spacing: .015em; cursor: pointer; transition: background-color 160ms ease, transform 160ms ease; }
 .tier-price:hover { background: #b94338; }
 .tier-price:active { transform: scale(.98); }
-.tier-price[aria-pressed="true"] { background: #8e382f; box-shadow: inset 0 0 0 1px rgba(255,250,246,.55); }
+.tier-price[aria-pressed="true"] { background: #8e382f; outline: 1px solid rgba(255,250,246,.72); outline-offset: 2px; }
 .tier-price:focus-visible, .info-trigger:focus-visible, .detail-cta:focus-visible { outline: 1px solid currentColor; outline-offset: 4px; }
 .tier-includes, .tier-fit { margin: 14px 0 0; color: #65645f; font-size: 11px; line-height: 1.7; }
 .tier-includes { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .035em; }

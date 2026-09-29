@@ -93,7 +93,8 @@
     }
     const tier = cta.dataset.tier.toUpperCase();
     const price = cta.dataset.price;
-    const priceText = cta.dataset.priceFrom === 'true' ? `NT$${Number(price).toLocaleString('en-US')} 起` : `NT$${Number(price).toLocaleString('en-US')}`;
+    const currency = main.dataset.currency || 'NT$';
+    const priceText = cta.dataset.priceFrom === 'true' ? `${currency}${Number(price).toLocaleString('en-US')} 起` : `${currency}${Number(price).toLocaleString('en-US')}`;
     if (status) status.textContent = `已選擇 ${tier}｜${priceText}；訂購流程將於下一階段開放。`;
   });
 })();
