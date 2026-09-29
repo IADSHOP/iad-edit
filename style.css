@@ -137,6 +137,7 @@ main { position: relative; width: 100%; height: 100svh; min-height: 550px; }
   .payment-mobile-qr-note { display: block; }
   .payment-mobile-cta { display: inline-flex; width: 100%; margin-top: 16px; }
   .payment-download { display: inline-flex; width: 100%; margin-top: 12px; }
+  .payment-steps + .payment-download { display: inline-flex; }
   .payment-mobile-download-note { display: block; }
   .payment-steps { margin: 15px 0; }
   .payment-steps li { margin: 2px 0; }
