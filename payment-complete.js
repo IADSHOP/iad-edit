@@ -35,6 +35,13 @@
     });
   }
 
+  function openMaterials(currentOrder) {
+    model.rememberLookup(currentOrder);
+    const target = new URL(model.withOrder('materials.html', currentOrder), window.location.href);
+    target.searchParams.set('paymentReport', 'sent');
+    window.location.replace(target.toString());
+  }
+
   if (!order) {
     showError('此裝置找不到這筆訂單的本機資料。請回到建立訂單時使用的瀏覽器與裝置。');
     return;
@@ -64,10 +71,7 @@
   lastFiveInput.required = order.paymentMethod === 'bank';
 
   if (order.paymentReportSubmitted) {
-    form.hidden = true;
-    success.hidden = false;
-    page.querySelector('[data-success-order-id]').textContent = order.orderId;
-    copy(page.querySelector('[data-copy-success-order]'), page.querySelector('[data-success-copy-feedback]'), order.orderId);
+    openMaterials(order);
     return;
   }
 
@@ -92,6 +96,7 @@
       paymentLastFive: order.paymentMethod === 'bank' ? paymentLastFive : '',
       paymentTime: order.paymentMethod === 'bank' ? '' : form.elements.paymentTime.value,
       paymentReference: order.paymentMethod === 'bank' ? '' : form.elements.paymentReference.value.trim(),
+      paymentNote: order.paymentMethod === 'bank' ? '' : form.elements.paymentReference.value.trim(),
       paymentReportedAt: new Date().toISOString(),
       paymentReportSubmitted: true,
       paymentStatus: 'PAYMENT REVIEW'
@@ -103,10 +108,18 @@
     }
     order = updated;
     model.rememberLookup(order);
-    window.OFFCUT_EMAIL_ADAPTER?.sendPaymentReport(order);
-    form.hidden = true;
-    success.hidden = false;
-    page.querySelector('[data-success-order-id]').textContent = order.orderId;
-    copy(page.querySelector('[data-copy-success-order]'), page.querySelector('[data-success-copy-feedback]'), order.orderId);
+    const submitButton = form.querySelector('[type="submit"]');
+    submitButton.disabled = true;
+    submitButton.textContent = '已保存，正在前往素材頁…';
+    if (window.OFFCUT_EMAIL_ADAPTER) {
+      const notification = await Promise.race([
+        window.OFFCUT_EMAIL_ADAPTER.sendPaymentReport(order),
+        new Promise(resolve => window.setTimeout(() => resolve({ sent: false, reason: 'timeout' }), 3500))
+      ]);
+      if (!notification.sent) console.warn('[OFFCUT] Email notification was not delivered; payment report is saved and the customer will continue to materials.', notification.reason);
+    } else {
+      console.warn('[OFFCUT] Email adapter is unavailable; payment report is saved and the customer will continue to materials.');
+    }
+    openMaterials(order);
   });
 })();

@@ -8,11 +8,11 @@
   <title>提交素材 — OFFCUT STUDIO</title>
   <link rel="icon" type="image/png" href="./favicon.png.png">
   <link rel="apple-touch-icon" href="./favicon.png.png">
-  <link rel="stylesheet" href="style.css?v=offcut-order-flow-1">
-  <script src="order-storage.js?v=offcut-order-flow-1" defer></script>
-  <script src="order-model.js?v=offcut-order-flow-1" defer></script>
-  <script src="upload-adapter.js?v=offcut-order-flow-1" defer></script>
-  <script src="materials.js?v=offcut-order-flow-1" defer></script>
+  <link rel="stylesheet" href="style.css?v=offcut-order-flow-2">
+  <script src="order-storage.js?v=offcut-order-flow-2" defer></script>
+  <script src="order-model.js?v=offcut-order-flow-2" defer></script>
+  <script src="upload-adapter.js?v=offcut-order-flow-2" defer></script>
+  <script src="materials.js?v=offcut-order-flow-2" defer></script>
 </head>
 <body class="flow-page">
   <header class="topbar" aria-label="網站標題"><a class="wordmark" href="index.html" aria-label="OFFCUT STUDIO 首頁"><img src="OFFCUTSTUDIO-transparent.png" alt="OFFCUT STUDIO"></a><span class="edition">VIDEO EDITING&nbsp; / &nbsp;2017</span></header>
@@ -22,13 +22,14 @@
     <p class="flow-error" data-materials-error hidden></p>
     <section class="materials-panel" data-materials-panel hidden>
       <div class="materials-order-id"><span>ORDER ID</span><strong data-order-id>—</strong><button class="copy-quiet" type="button" data-copy-order>複製訂單編號</button><small data-order-copy-feedback aria-live="polite"></small></div>
-      <dl class="order-detail-grid"><div><dt>服務</dt><dd data-order-service>—</dd></div><div><dt>方案</dt><dd data-order-tier>—</dd></div></dl>
+      <section class="materials-status" data-materials-report-state hidden aria-live="polite"><p class="checkout-eyebrow">PAYMENT REVIEW</p><h2>付款回報已送出</h2><p>付款狀態 <strong data-material-payment-status>等待付款確認</strong></p><small>付款仍待 OFFCUT 人工確認。此狀態不代表付款成功。</small></section>
+      <dl class="order-detail-grid"><div><dt>服務</dt><dd data-order-service>—</dd></div><div><dt>方案</dt><dd data-order-tier>—</dd></div><div><dt>付款狀態</dt><dd><span data-order-payment-status>—</span><small data-order-payment-en>—</small></dd></div><div><dt>素材狀態</dt><dd><span data-order-material-status>—</span><small data-order-material-en>—</small></dd></div></dl>
       <p>請依訂單編號整理素材，建議資料夾命名：</p>
       <p class="folder-example"><strong data-folder-example>OFF-260930-A7K3_姓名</strong></p>
       <div class="upload-placeholder"><span>UPLOAD MATERIALS</span><p data-upload-message>上傳服務將於下一階段串接。此頁不會把影片上傳到 GitHub。</p><button type="button" class="flow-primary" data-upload-button disabled>上傳素材 →</button></div>
-      <p class="flow-prototype-note">目前 uploadProvider / uploadUrl 尚未設定；尚未完成付款確認的訂單不會開放素材上傳。</p>
+      <p class="flow-prototype-note">目前尚未串接安全的素材上傳服務；付款狀態會維持原狀，素材提交狀態也不會在此原型中自動變更。</p>
     </section>
-    <a class="flow-contact-link" href="contact.html">LINE 官方聯繫／素材問題</a>
+    <a class="flow-contact-link" href="https://lin.ee/vr8g6ui" target="_blank" rel="noopener">LINE @909rowxh・素材問題 →</a>
   </main>
 </body>
 </html>

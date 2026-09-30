@@ -19,6 +19,16 @@
   page.querySelector('[data-order-id]').textContent = order.orderId;
   page.querySelector('[data-order-service]').textContent = services[order.service] || order.service;
   page.querySelector('[data-order-tier]').textContent = tiers[order.tier] || order.tier;
+  const paymentLabels = { 'PENDING PAYMENT': '待付款', 'PAYMENT REVIEW': '等待付款確認', 'PAID / CONFIRMED': '已確認付款' };
+  const materialLabels = { 'NOT SUBMITTED': '尚未提交', SUBMITTED: '素材已收到', 'NEEDS MORE': '需補件' };
+  page.querySelector('[data-order-payment-status]').textContent = paymentLabels[order.paymentStatus] || order.paymentStatus;
+  page.querySelector('[data-order-payment-en]').textContent = order.paymentStatus;
+  page.querySelector('[data-order-material-status]').textContent = materialLabels[order.materialStatus] || order.materialStatus;
+  page.querySelector('[data-order-material-en]').textContent = order.materialStatus;
+  if ((params.get('paymentReport') === 'sent' || order.paymentReportSubmitted) && order.paymentStatus === 'PAYMENT REVIEW') {
+    page.querySelector('[data-materials-report-state]').hidden = false;
+    page.querySelector('[data-material-payment-status]').textContent = '等待付款確認 · PAYMENT REVIEW';
+  }
   page.querySelector('[data-folder-example]').textContent = `${order.orderId}_${order.customerName || '姓名'}`;
   page.querySelector('[data-copy-order]').addEventListener('click', async event => {
     let copied = false;
@@ -30,16 +40,14 @@
   });
   const button = page.querySelector('[data-upload-button]');
   const message = page.querySelector('[data-upload-message]');
-  if (order.paymentStatus !== 'PAID / CONFIRMED') {
-    message.textContent = 'OFFCUT 確認付款後，這裡才會開放提交素材。此原型目前尚無法在線上確認付款。';
-  } else if (order.materialStatus === 'SUBMITTED') {
+  if (order.materialStatus === 'SUBMITTED') {
     message.textContent = '素材已收到。如需補充，請聯繫 OFFCUT。';
   } else if (upload?.isConfigured()) {
     button.disabled = false;
     message.textContent = `使用 ${upload.config.uploadProvider || '外部上傳服務'} 提交素材。大型影片將直接傳至上傳服務，不會放進網站或 GitHub。`;
     button.addEventListener('click', () => upload.open(order));
   } else {
-    message.textContent = '付款已確認。上傳服務尚未串接，請先依訂單編號整理素材，並聯繫 OFFCUT 確認安全的交付方式。';
+    message.textContent = '可先依訂單編號整理素材。正式上傳服務尚未串接；此原型不會上傳或保存檔案。';
   }
   panel.hidden = false;
 })();

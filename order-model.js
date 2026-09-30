@@ -44,6 +44,7 @@
       paymentReportSubmitted: false,
       paymentTime: '',
       paymentReference: '',
+      paymentNote: '',
       paymentLastFive: '',
       paymentScreenshotName: ''
     });
