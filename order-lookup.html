@@ -8,10 +8,12 @@
   <title>訂單查詢 — OFFCUT STUDIO</title>
   <link rel="icon" type="image/png" href="./favicon.png.png">
   <link rel="apple-touch-icon" href="./favicon.png.png">
-  <link rel="stylesheet" href="style.css?v=offcut-order-flow-2">
+  <link rel="stylesheet" href="style.css?v=materials-methods-1">
+  <script src="site-config.js?v=materials-methods-1" defer></script>
   <script src="order-storage.js?v=offcut-order-flow-2" defer></script>
   <script src="order-model.js?v=offcut-order-flow-2" defer></script>
-  <script src="order-lookup.js?v=offcut-order-flow-2" defer></script>
+  <script src="order-api.js?v=materials-methods-1" defer></script>
+  <script src="order-lookup.js?v=materials-methods-1" defer></script>
 </head>
 <body class="flow-page">
   <header class="topbar" aria-label="網站標題"><a class="wordmark" href="index.html" aria-label="OFFCUT STUDIO 首頁"><img src="OFFCUTSTUDIO-transparent.png" alt="OFFCUT STUDIO"></a><span class="edition">VIDEO EDITING&nbsp; / &nbsp;2017</span></header>
@@ -24,7 +26,7 @@
       <button class="flow-primary" type="submit">查詢訂單 →</button>
       <p class="flow-error" data-lookup-error aria-live="polite" hidden></p>
     </form>
-    <p class="flow-prototype-note">此原型只能查詢同一瀏覽器與裝置中建立並回報的訂單。正式跨裝置查詢需要安全的後端資料庫。</p>
+    <p class="flow-prototype-note" data-lookup-backend-note>此頁目前使用同一瀏覽器與裝置保存的訂單資料。</p>
     <a class="flow-contact-link" href="contact.html">付款或訂單問題：聯繫 OFFCUT</a>
   </main>
 </body>

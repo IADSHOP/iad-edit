@@ -8,26 +8,54 @@
   <title>提交素材 — OFFCUT STUDIO</title>
   <link rel="icon" type="image/png" href="./favicon.png.png">
   <link rel="apple-touch-icon" href="./favicon.png.png">
-  <link rel="stylesheet" href="style.css?v=offcut-order-flow-2">
-  <script src="order-storage.js?v=offcut-order-flow-2" defer></script>
-  <script src="order-model.js?v=offcut-order-flow-2" defer></script>
-  <script src="upload-adapter.js?v=offcut-order-flow-2" defer></script>
-  <script src="materials.js?v=offcut-order-flow-2" defer></script>
+  <link rel="stylesheet" href="style.css?v=materials-methods-1">
+  <script src="site-config.js?v=materials-methods-1" defer></script>
+  <script src="order-storage.js?v=materials-methods-1" defer></script>
+  <script src="order-model.js?v=materials-methods-1" defer></script>
+  <script src="order-api.js?v=materials-methods-1" defer></script>
+  <script src="materials.js?v=materials-methods-1" defer></script>
 </head>
 <body class="flow-page">
   <header class="topbar" aria-label="網站標題"><a class="wordmark" href="index.html" aria-label="OFFCUT STUDIO 首頁"><img src="OFFCUTSTUDIO-transparent.png" alt="OFFCUT STUDIO"></a><span class="edition">VIDEO EDITING&nbsp; / &nbsp;2017</span></header>
-  <main class="flow-main" data-materials-page>
+  <main class="flow-main materials-main" data-materials-page>
     <a class="flow-back" data-materials-back href="order-lookup.html">← 訂單資訊</a>
-    <header class="flow-heading"><p class="checkout-eyebrow">MATERIAL SUBMISSION</p><h1>提交素材</h1><p>請依訂單編號整理本次製作素材。</p></header>
+    <header class="flow-heading"><p class="checkout-eyebrow">MATERIAL SUBMISSION</p><h1>素材提交</h1><p>請依訂單編號整理本次製作素材。付款回報完成後，可先行提交素材，付款仍由 OFFCUT 人工確認。</p></header>
     <p class="flow-error" data-materials-error hidden></p>
     <section class="materials-panel" data-materials-panel hidden>
       <div class="materials-order-id"><span>ORDER ID</span><strong data-order-id>—</strong><button class="copy-quiet" type="button" data-copy-order>複製訂單編號</button><small data-order-copy-feedback aria-live="polite"></small></div>
-      <section class="materials-status" data-materials-report-state hidden aria-live="polite"><p class="checkout-eyebrow">PAYMENT REVIEW</p><h2>付款回報已送出</h2><p>付款狀態 <strong data-material-payment-status>等待付款確認</strong></p><small>付款仍待 OFFCUT 人工確認。此狀態不代表付款成功。</small></section>
+      <section class="materials-status" data-materials-report-state hidden aria-live="polite"><p class="checkout-eyebrow">PAYMENT REVIEW</p><h2>您的付款回報已送出</h2><p>目前付款狀態：<strong data-material-payment-status>等待 OFFCUT 確認付款</strong></p><small>素材可以先行提交。付款尚未經 OFFCUT 確認。</small></section>
       <dl class="order-detail-grid"><div><dt>服務</dt><dd data-order-service>—</dd></div><div><dt>方案</dt><dd data-order-tier>—</dd></div><div><dt>付款狀態</dt><dd><span data-order-payment-status>—</span><small data-order-payment-en>—</small></dd></div><div><dt>素材狀態</dt><dd><span data-order-material-status>—</span><small data-order-material-en>—</small></dd></div></dl>
-      <p>請依訂單編號整理素材，建議資料夾命名：</p>
-      <p class="folder-example"><strong data-folder-example>OFF-260930-A7K3_姓名</strong></p>
-      <div class="upload-placeholder"><span>UPLOAD MATERIALS</span><p data-upload-message>上傳服務將於下一階段串接。此頁不會把影片上傳到 GitHub。</p><button type="button" class="flow-primary" data-upload-button disabled>上傳素材 →</button></div>
-      <p class="flow-prototype-note">目前尚未串接安全的素材上傳服務；付款狀態會維持原狀，素材提交狀態也不會在此原型中自動變更。</p>
+      <p class="materials-folder-hint">請依訂單編號整理檔案，建議資料夾名稱：<strong data-folder-example>OFF-260930-A7K3_姓名</strong></p>
+      <div class="materials-options" aria-label="素材提交方式">
+        <section class="materials-option">
+          <div class="materials-option-top"><span class="materials-option-number">01</span><span class="materials-recommended">RECOMMENDED</span></div>
+          <h2>上傳到 OFFCUT 雲端</h2>
+          <p>透過 OFFCUT Google Form 提交素材，檔案將進入 OFFCUT Google Drive。</p>
+          <a class="flow-text-link" data-google-form-link hidden target="_blank" rel="noopener">上傳到 OFFCUT 雲端 →</a>
+          <button class="materials-disabled" data-google-form-disabled type="button" disabled>上傳入口準備中</button>
+        </section>
+        <section class="materials-option">
+          <div class="materials-option-top"><span class="materials-option-number">02</span></div>
+          <h2>提供自己的雲端連結</h2>
+          <p>可使用 Google Drive、Dropbox、OneDrive、iCloud、WeTransfer 或其他可下載連結。</p>
+          <button class="flow-text-link materials-action" type="button" data-show-link-form>提交雲端連結 →</button>
+          <form class="materials-link-form" data-material-link-form hidden>
+            <label>素材連結<input name="materialLink" type="url" placeholder="https://…" inputmode="url" required maxlength="2000" pattern="https?://.+"></label>
+            <small>請確認 OFFCUT 擁有檢視及下載權限。</small>
+            <label>素材備註（選填）<textarea name="materialNote" rows="3" maxlength="2000" placeholder="例如：主要使用影片 01；00:35 開始；第三支為主要鏡頭"></textarea></label>
+            <button class="flow-primary" type="submit" data-material-link-submit>提交素材連結 →</button>
+          </form>
+        </section>
+        <section class="materials-option">
+          <div class="materials-option-top"><span class="materials-option-number">03</span></div>
+          <h2>USB 寄送</h2>
+          <p>適合超大型素材、素材數量較多或網路上傳不方便。請先聯繫 OFFCUT 取得寄送資訊。</p>
+          <a class="flow-text-link" data-usb-action href="https://lin.ee/vr8g6ui" target="_blank" rel="noopener">聯繫 OFFCUT →</a>
+          <p class="materials-line-id">LINE ID　<strong>@909rowxh</strong></p>
+        </section>
+      </div>
+      <p class="flow-error" data-material-action-message aria-live="polite" hidden></p>
+      <p class="flow-prototype-note" data-material-backend-note></p>
     </section>
     <a class="flow-contact-link" href="https://lin.ee/vr8g6ui" target="_blank" rel="noopener">LINE @909rowxh・素材問題 →</a>
   </main>

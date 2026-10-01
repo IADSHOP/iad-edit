@@ -529,6 +529,37 @@ main { position: relative; width: 100%; height: 100svh; min-height: 550px; }
   .flow-page > .contact-main { width: calc(100% - 36px); }
   .contact-qr { width: min(56vw, 210px); }
 }
+.materials-main { width: min(940px, calc(100% - 56px)); }
+.materials-folder-hint { margin: 18px 0 0; color: #777670; font-size: 10px; line-height: 1.7; }
+.materials-folder-hint strong { display: block; margin-top: 4px; color: var(--fg); font: 400 10px/1.6 'DM Mono', monospace; overflow-wrap: anywhere; }
+.materials-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(20px, 3.5vw, 48px); margin: 28px 0 0; border-top: 1px solid rgba(37,37,35,.16); }
+.materials-option { min-width: 0; padding: 17px 0 20px; border-bottom: 1px solid rgba(37,37,35,.16); }
+.materials-option-top { display: flex; align-items: center; justify-content: space-between; min-height: 16px; }
+.materials-option-number { color: #8a6652; font: 400 10px/1.4 'DM Mono', monospace; letter-spacing: .12em; }
+.materials-recommended { color: #8a6652; font: 400 7px/1.5 'DM Mono', monospace; letter-spacing: .12em; }
+.materials-option h2 { margin: 16px 0 8px; color: var(--fg); font-size: 15px; font-weight: 500; line-height: 1.45; }
+.materials-option > p { min-height: 54px; margin: 0 0 14px; color: #777670; font-size: 10px; line-height: 1.8; }
+.materials-option .flow-text-link, .materials-action { display: inline-block; padding: 0; border: 0; background: none; color: #8a6652; font: inherit; font-size: 10px; line-height: 1.6; text-align: left; text-decoration: none; cursor: pointer; }
+.materials-disabled { padding: 0; border: 0; background: transparent; color: #96948d; font: inherit; font-size: 10px; line-height: 1.6; text-align: left; opacity: 1; }
+.materials-line-id { margin-top: 12px !important; min-height: 0 !important; color: #777670; font: 400 8px/1.6 'DM Mono', monospace !important; }
+.materials-line-id strong { color: var(--fg); font-weight: 500; }
+.materials-link-form { display: grid; gap: 12px; margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(37,37,35,.12); }
+.materials-link-form label { display: grid; gap: 6px; color: #686761; font-size: 9px; line-height: 1.5; }
+.materials-link-form input, .materials-link-form textarea { width: 100%; min-width: 0; padding: 10px 11px; border: 1px solid rgba(37,37,35,.2); border-radius: 0; background: rgba(255,255,255,.24); color: var(--fg); font-family: inherit; font-size: 11px; line-height: 1.6; }
+.materials-link-form small { color: #85837c; font-size: 8px; line-height: 1.6; }
+.materials-link-form .flow-primary { width: 100%; }
+[data-material-action-message] { margin: 17px 0 0; color: #686761; font-size: 10px; line-height: 1.7; }
+[data-material-action-message].is-error { color: #a14f45; }
+@media (max-width: 760px) {
+  .materials-main { width: calc(100% - 44px); }
+  .materials-options { grid-template-columns: minmax(0, 1fr); gap: 0; margin-top: 22px; }
+  .materials-option { padding: 17px 0 20px; }
+  .materials-option h2 { margin-top: 11px; }
+  .materials-option > p { min-height: 0; }
+}
+@media (max-width: 480px) {
+  .materials-main { width: calc(100% - 36px); }
+}
 @media (max-width: 760px) {
   .flow-main { width: calc(100% - 44px); padding: 100px 0 42px; }
   .flow-heading { margin: 36px 0 24px; }

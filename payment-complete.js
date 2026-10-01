@@ -10,7 +10,6 @@
   let order = model.get(orderId);
   const summary = page.querySelector('[data-flow-order-summary]');
   const form = page.querySelector('[data-report-form]');
-  const success = page.querySelector('[data-report-success]');
   const error = page.querySelector('[data-flow-error]');
   const formError = page.querySelector('[data-form-error]');
 
@@ -95,10 +94,11 @@
       lineId,
       paymentLastFive: order.paymentMethod === 'bank' ? paymentLastFive : '',
       paymentTime: order.paymentMethod === 'bank' ? '' : form.elements.paymentTime.value,
-      paymentReference: order.paymentMethod === 'bank' ? '' : form.elements.paymentReference.value.trim(),
-      paymentNote: order.paymentMethod === 'bank' ? '' : form.elements.paymentReference.value.trim(),
+      paymentReference: order.paymentMethod === 'bank' ? paymentLastFive : form.elements.paymentReference.value.trim(),
+      paymentNote: form.elements.paymentNote.value.trim(),
       paymentReportedAt: new Date().toISOString(),
       paymentReportSubmitted: true,
+      paymentNotificationStatus: window.OFFCUT_ORDER_API?.configured ? 'PENDING' : 'NOT CONFIGURED',
       paymentStatus: 'PAYMENT REVIEW'
     });
     if (!updated) {
@@ -114,11 +114,14 @@
     if (window.OFFCUT_EMAIL_ADAPTER) {
       const notification = await Promise.race([
         window.OFFCUT_EMAIL_ADAPTER.sendPaymentReport(order),
-        new Promise(resolve => window.setTimeout(() => resolve({ sent: false, reason: 'timeout' }), 3500))
+        new Promise(resolve => window.setTimeout(() => resolve({ confirmed: false, reason: 'timeout' }), 3500))
       ]);
-      if (!notification.sent) console.warn('[OFFCUT] Email notification was not delivered; payment report is saved and the customer will continue to materials.', notification.reason);
+      const status = notification.confirmed ? 'SENT' : notification.dispatched ? 'DISPATCHED · UNCONFIRMED' : notification.reason === 'not-configured' ? 'NOT CONFIGURED' : 'FAILED';
+      order = model.update(order.orderId, { paymentNotificationStatus: status }) || order;
+      if (!notification.confirmed) console.warn('[OFFCUT] Payment report is saved and the customer will continue to materials. Notification status:', status, notification.reason);
     } else {
-      console.warn('[OFFCUT] Email adapter is unavailable; payment report is saved and the customer will continue to materials.');
+      order = model.update(order.orderId, { paymentNotificationStatus: 'NOT CONFIGURED' }) || order;
+      console.warn('[OFFCUT] Remote order backend not configured. Payment report is saved locally; no email was sent.');
     }
     openMaterials(order);
   });

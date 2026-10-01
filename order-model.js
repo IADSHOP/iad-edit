@@ -46,7 +46,13 @@
       paymentReference: '',
       paymentNote: '',
       paymentLastFive: '',
-      paymentScreenshotName: ''
+      paymentScreenshotName: '',
+      paymentNotificationStatus: 'NOT SENT',
+      materialMethod: '',
+      materialLink: '',
+      materialNote: '',
+      materialReportedAt: '',
+      materialNotificationStatus: 'NOT SENT'
     });
   }
 
@@ -58,6 +64,11 @@
     const order = get(orderId);
     if (!order) return null;
     return write({ ...order, ...changes, orderId: order.orderId, updatedAt: new Date().toISOString() });
+  }
+
+  function cacheRemote(order) {
+    if (!order || typeof order.orderId !== 'string' || !/^OFF-\d{6}-[A-Z2-9]{4}$/i.test(order.orderId)) return null;
+    return write(order);
   }
 
   function findByCredentials(orderId, email) {
@@ -105,6 +116,7 @@
     get,
     all: readAll,
     update,
+    cacheRemote,
     findByCredentials,
     rememberLookup,
     isLookupAuthorized,

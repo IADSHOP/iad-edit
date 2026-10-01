@@ -9,9 +9,11 @@
   <link rel="icon" type="image/png" href="./favicon.png.png">
   <link rel="apple-touch-icon" href="./favicon.png.png">
   <link rel="stylesheet" href="style.css?v=offcut-order-flow-2">
+  <script src="site-config.js?v=materials-methods-1" defer></script>
   <script src="order-storage.js?v=offcut-order-flow-2" defer></script>
   <script src="order-model.js?v=offcut-order-flow-2" defer></script>
-  <script src="email-adapter.js?v=offcut-order-flow-2" defer></script>
+  <script src="order-api.js?v=materials-methods-1" defer></script>
+  <script src="email-adapter.js?v=materials-methods-1" defer></script>
   <script src="payment-complete.js?v=offcut-order-flow-2" defer></script>
 </head>
 <body class="flow-page">
@@ -33,6 +35,7 @@
       <label data-bank-last-five-row hidden>匯款帳號後五碼<input name="paymentLastFive" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" autocomplete="off"></label>
       <label data-payment-time-row hidden>付款時間（選填）<input name="paymentTime" type="datetime-local"></label>
       <label data-payment-reference-row hidden>付款備註／可辨識資訊（選填）<textarea name="paymentReference" rows="3" maxlength="500"></textarea></label>
+      <label>客戶備註（選填）<textarea name="paymentNote" rows="3" maxlength="1000"></textarea></label>
       <label class="file-report" data-payment-screenshot-row hidden>付款截圖（選填）<input name="paymentScreenshot" type="file" accept="image/*"><small>待後端串接。此原型不會上傳或保存所選圖片。</small></label>
       <p class="flow-error" data-form-error hidden></p>
       <button class="flow-primary" type="submit">提交付款回報 並準備上傳素材 →</button>
